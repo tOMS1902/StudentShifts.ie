@@ -14,5 +14,6 @@ This repo contains everything you need to run the demo locally.
    `npm install`
 2. Start the dev server:
    `npm run dev`
+   // update vercel
 
 > Note: AI-powered helpers have been removed. Job descriptions and bios should now be written manually in the UI.
