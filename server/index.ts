@@ -35,10 +35,10 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-app.use('/auth', authRoutes);
-app.use('/profiles', profileRoutes);
-app.use('/jobs', jobRoutes);
-app.use('/messages', messageRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/profiles', profileRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error', err);

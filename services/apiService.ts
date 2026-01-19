@@ -1,48 +1,116 @@
-
 import { User, StudentProfile, JobListing } from '../types.ts';
 
-/**
- * NOTE: To connect to Cloud SQL, these methods would call a backend API 
- * (e.g., hosted on Google Cloud Run) that has access to your DB credentials.
- */
-
-const API_BASE_URL = 'https://your-backend-api-url.a.run.app'; // Placeholder
+// In development, Vite proxies /api to localhost:4000
+// In production (Vercel), /api is routed to the serverless function
+const API_BASE_URL = '/api';
 
 export const apiService = {
   // User Authentication
   async login(email: string, pass: string): Promise<any> {
-    // In a real app: return fetch(`${API_BASE_URL}/auth/login`, { ... })
-    console.log("API: Authenticating user against SQL database...");
-    return null; 
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API Login Error:', error);
+      throw error;
+    }
+  },
+
+  async register(data: any): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API Register Error:', error);
+      throw error;
+    }
   },
 
   // Profile Management
   async saveStudentProfile(profile: StudentProfile): Promise<boolean> {
-    console.log("API: Saving profile to student_profiles and work_experience tables...");
-    // Real implementation would use an Auth token
+    // Note: You need to implement token handling for authenticated requests
+    // For now, we'll just try to send it if we had a token implementation
     try {
-      /*
-      const response = await fetch(`${API_BASE_URL}/profile`, {
+      // Placeholder: We need the JWT token from login to authorize this.
+      // Assuming we might store it in localStorage or state.
+      const userStr = localStorage.getItem('ss:user');
+      let token = '';
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        token = user.token || ''; // The backend returns 'token' on login/register
+      }
+
+      const response = await fetch(`${API_BASE_URL}/profiles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(profile)
       });
       return response.ok;
-      */
-      return true;
     } catch (e) {
+      console.error('Save Profile Error:', e);
       return false;
     }
   },
 
   async getStudentProfile(userId: string): Promise<StudentProfile | null> {
-    console.log(`API: Fetching profile for user ${userId} with JOIN on work_experience...`);
-    return null;
+    try {
+      const response = await fetch(`${API_BASE_URL}/profiles/${userId}`);
+      if (response.ok) return await response.json();
+      return null;
+    } catch (error) {
+      console.error('Get Profile Error:', error);
+      return null;
+    }
   },
 
   // Job Management
   async postJob(job: Partial<JobListing>): Promise<JobListing | null> {
-    console.log("API: Inserting new record into jobs table...");
-    return null;
+    // Similar to save profile, needs auth
+    try {
+      const userStr = localStorage.getItem('ss:user');
+      let token = '';
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        token = user.token || '';
+      }
+
+      const response = await fetch(`${API_BASE_URL}/jobs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(job)
+      });
+
+      if (response.ok) return await response.json();
+      return null;
+    } catch (error) {
+      console.error('Post Job Error:', error);
+      return null;
+    }
   }
 };

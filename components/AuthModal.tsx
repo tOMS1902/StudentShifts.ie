@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { UserMode } from '../types.ts';
 import { IRISH_UNIVERSITIES } from '../constants.tsx';
+import { apiService } from '../services/apiService.ts';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -13,7 +14,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
   const [isLogin, setIsLogin] = useState(true);
   const [mode, setMode] = useState<UserMode>(initialMode);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{type: 'success' | 'warning' | 'error', text: string} | null>(null);
+  const [status, setStatus] = useState<{ type: 'success' | 'warning' | 'error', text: string } | null>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -30,7 +31,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
   const validate = () => {
     // Check for hardcoded test logins first (skip standard email validation for these)
     const isTestUser = (formData.email === 'user1' || formData.email === 'user2') && formData.password === 'toms1902';
-    
+
     if (!isTestUser && !formData.email.includes('@')) {
       setStatus({ type: 'error', text: 'Please enter a valid email address.' });
       return false;
@@ -59,62 +60,67 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
-    
+
     if (!validate()) return;
-    
+
     setLoading(true);
 
-    // Mock API call simulation
-    setTimeout(() => {
-      let finalMode = mode;
-      let finalFirstName = formData.firstName;
-      let finalLastName = formData.lastName;
-      let finalUni = formData.university;
-      let finalCompany = formData.companyName;
+    try {
+      let userData;
+      if (isLogin) {
+        // Login
+        const response = await apiService.login(formData.email, formData.password);
+        userData = {
+          ...response.user,
+          token: response.token,
+          mode: response.user.role === 'student' ? UserMode.STUDENT : UserMode.EMPLOYER
+        };
+      } else {
+        // Register
+        const registerData = {
+          email: formData.email,
+          password: formData.password,
+          role: mode === UserMode.STUDENT ? 'student' : 'employer',
+          firstName: formData.firstName || (mode === UserMode.EMPLOYER ? formData.companyName : 'User'),
+          lastName: formData.lastName || ''
+        };
+        const response = await apiService.register(registerData);
+        userData = {
+          ...response.user,
+          token: response.token,
+          mode: mode
+        };
 
-      // Logic for hardcoded test logins
-      if (isLogin && formData.password === 'toms1902') {
-        if (formData.email === 'user1') {
-          finalMode = UserMode.STUDENT;
-          finalFirstName = 'Test';
-          finalLastName = 'Student';
-          finalUni = 'Trinity College Dublin (TCD)';
-        } else if (formData.email === 'user2') {
-          finalMode = UserMode.EMPLOYER;
-          finalFirstName = 'Global';
-          finalLastName = 'Ventures';
-          finalCompany = 'Global Ventures Ltd';
-        } else if (!formData.email.includes('@')) {
-           // If not user1/user2 and no @, fail
-           setLoading(false);
-           setStatus({ type: 'error', text: 'Invalid login credentials.' });
-           return;
+        // If student, try to create initial profile
+        if (mode === UserMode.STUDENT) {
+          const newProfile = {
+            id: userData._id || userData.id,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            university: formData.university,
+            phone: formData.phone,
+            skills: [],
+            experience: [],
+            bio: ''
+          };
+          // We fire and forget this for now, or await it
+          await apiService.saveStudentProfile(newProfile as any);
         }
-      } else if (isLogin && (formData.email === 'user1' || formData.email === 'user2')) {
-        // Correct email but wrong password
-        setLoading(false);
-        setStatus({ type: 'error', text: 'Incorrect password.' });
-        return;
       }
 
-      const mockUser = {
-        mode: finalMode,
-        email: formData.email,
-        studentId: finalMode === UserMode.STUDENT ? 's-' + Math.random().toString(36).substr(2, 5) : undefined,
-        employerId: finalMode === UserMode.EMPLOYER ? 'e-' + Math.random().toString(36).substr(2, 5) : undefined,
-        token: 'mock-jwt-token',
-        firstName: finalMode === UserMode.STUDENT ? (finalFirstName || 'Student') : (finalCompany || 'Employer'),
-        lastName: finalLastName,
-        university: finalUni,
-        companyName: finalCompany
-      };
-      
       setStatus({ type: 'success', text: isLogin ? 'Welcome back!' : 'Account created successfully!' });
-      
+
       setTimeout(() => {
-        onSuccess(mockUser);
-      }, 800);
-    }, 1200);
+        onSuccess(userData);
+      }, 500);
+
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      const msg = err.message || "Authentication failed";
+      setStatus({ type: 'error', text: msg });
+      setLoading(false);
+    }
   };
 
   return (
@@ -134,14 +140,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
           </div>
 
           <div className="flex p-1 bg-warm-50 dark:bg-zinc-950 rounded-xl mb-4 border border-warm-100 dark:border-zinc-800">
-            <button 
+            <button
               onClick={() => { setMode(UserMode.STUDENT); setStatus(null); }}
               className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${mode === UserMode.STUDENT ? 'bg-white dark:bg-zinc-800 shadow-sm text-magenta' : 'text-zinc-400'}`}
             >
               <span className="material-symbols-outlined text-sm">school</span>
               Student
             </button>
-            <button 
+            <button
               onClick={() => { setMode(UserMode.EMPLOYER); setStatus(null); }}
               className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${mode === UserMode.EMPLOYER ? 'bg-white dark:bg-zinc-800 shadow-sm text-magenta' : 'text-zinc-400'}`}
             >
@@ -151,14 +157,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
           </div>
 
           <div className="flex justify-center gap-8 mb-6 border-b border-warm-100 dark:border-zinc-800">
-            <button 
+            <button
               onClick={() => { setIsLogin(true); setStatus(null); }}
               className={`pb-3 text-sm font-bold transition-all relative ${isLogin ? 'text-magenta' : 'text-zinc-400'}`}
             >
               Login
               {isLogin && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-magenta rounded-full"></div>}
             </button>
-            <button 
+            <button
               onClick={() => { setIsLogin(false); setStatus(null); }}
               className={`pb-3 text-sm font-bold transition-all relative ${!isLogin ? 'text-magenta' : 'text-zinc-400'}`}
             >
@@ -169,11 +175,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
 
           <form onSubmit={handleSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
             {status && (
-              <div className={`p-3 rounded-xl text-xs font-bold animate-in slide-in-from-top-2 border ${
-                status.type === 'error' ? 'bg-red-50 text-red-600 border-red-100' :
+              <div className={`p-3 rounded-xl text-xs font-bold animate-in slide-in-from-top-2 border ${status.type === 'error' ? 'bg-red-50 text-red-600 border-red-100' :
                 status.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                'bg-green-50 text-green-600 border-green-100'
-              }`}>
+                  'bg-green-50 text-green-600 border-green-100'
+                }`}>
                 {status.text}
               </div>
             )}
@@ -185,19 +190,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">First Name</label>
-                        <input required type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
+                        <input required type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Last Name</label>
-                        <input required type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
+                        <input required type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">University</label>
-                      <select 
-                        required 
-                        value={formData.university} 
-                        onChange={e => setFormData({...formData, university: e.target.value})} 
+                      <select
+                        required
+                        value={formData.university}
+                        onChange={e => setFormData({ ...formData, university: e.target.value })}
                         className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all appearance-none"
                       >
                         <option value="">Select your institution...</option>
@@ -210,7 +215,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
                 ) : (
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Company Name</label>
-                    <input required type="text" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" placeholder="e.g. Dublin Tech Hub" />
+                    <input required type="text" value={formData.companyName} onChange={e => setFormData({ ...formData, companyName: e.target.value })} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" placeholder="e.g. Dublin Tech Hub" />
                   </div>
                 )}
               </>
@@ -218,22 +223,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
 
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Email / Username</label>
-              <input required type="text" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" placeholder={isLogin ? "e.g. user1" : "e.g. student@tcd.ie"} />
+              <input required type="text" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" placeholder={isLogin ? "e.g. user1" : "e.g. student@tcd.ie"} />
             </div>
 
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Password</label>
-              <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
+              <input required type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
             </div>
 
             {!isLogin && (
               <div>
                 <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Confirm Password</label>
-                <input required type="password" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
+                <input required type="password" value={formData.confirmPassword} onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })} className="w-full px-4 py-2.5 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-magenta outline-none transition-all" />
               </div>
             )}
 
-            <button 
+            <button
               disabled={loading}
               className={`w-full py-4 bg-magenta hover:bg-magenta-600 text-white font-bold rounded-xl shadow-lg shadow-magenta/20 transition-all flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
             >
@@ -243,10 +248,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess, initialMode =
                 isLogin ? 'Sign In' : 'Create Account'
               )}
             </button>
-            
+
             {isLogin && (
               <p className="text-[10px] text-zinc-400 text-center mt-2">
-                Tip: Try <strong>user1</strong> (Student) or <strong>user2</strong> (Employer) <br/> with password <strong>toms1902</strong>
+                Tip: Try <strong>user1</strong> (Student) or <strong>user2</strong> (Employer) <br /> with password <strong>toms1902</strong>
               </p>
             )}
           </form>
