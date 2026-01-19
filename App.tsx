@@ -92,14 +92,14 @@ const JobDetails = ({ job, onClose, onMessage, canMessage }: { job: JobListing, 
               </h3>
               {error && <p className="text-red-500 text-xs font-bold mb-2">{error}</p>}
               <div className="space-y-3">
-                <textarea 
+                <textarea
                   placeholder="Ask a question about the role or pitch yourself..."
                   className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-100 dark:border-zinc-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-magenta transition-all"
                   rows={3}
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                 ></textarea>
-                <button 
+                <button
                   onClick={handleSend}
                   disabled={sent}
                   className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg ${sent ? 'bg-green-500 text-white' : 'bg-magenta text-white active:scale-95 shadow-magenta/20'}`}
@@ -183,9 +183,9 @@ const JobFeed = ({ jobs, onJobClick }: { jobs: JobListing[], onJobClick: (id: st
       </div>
 
       <div className="relative group max-w-3xl mx-auto">
-        <input 
-          type="text" 
-          placeholder="Search for your next shift (e.g. Barista, Tutor, Library)..." 
+        <input
+          type="text"
+          placeholder="Search for your next shift (e.g. Barista, Tutor, Library)..."
           className="w-full pl-14 pr-6 py-5 bg-white dark:bg-zinc-900 border border-warm-200 dark:border-zinc-800 rounded-2xl shadow-xl shadow-warm-200/20 dark:shadow-none focus:ring-4 focus:ring-magenta/10 outline-none transition-all text-lg"
         />
         <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 text-2xl">search</span>
@@ -193,7 +193,7 @@ const JobFeed = ({ jobs, onJobClick }: { jobs: JobListing[], onJobClick: (id: st
 
       <div className="flex items-center justify-center gap-3 overflow-x-auto pb-4 scrollbar-hide">
         {filters.map(f => (
-          <button 
+          <button
             key={f}
             onClick={() => setActiveFilter(f)}
             className={`flex-shrink-0 px-8 py-3 rounded-2xl font-bold text-xs transition-all ${activeFilter === f ? 'bg-magenta text-white shadow-xl shadow-magenta/20 scale-105' : 'bg-white dark:bg-zinc-900 border border-warm-200 dark:border-zinc-800 text-zinc-500 hover:bg-warm-50 dark:hover:bg-zinc-800'}`}
@@ -206,8 +206,8 @@ const JobFeed = ({ jobs, onJobClick }: { jobs: JobListing[], onJobClick: (id: st
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredJobs.length === 0 ? (
           <div className="py-20 text-center text-zinc-400 col-span-full">
-             <span className="material-symbols-outlined text-6xl mb-4 opacity-20">work_off</span>
-             <p className="text-lg">No shifts match the {activeFilter} filter yet.</p>
+            <span className="material-symbols-outlined text-6xl mb-4 opacity-20">work_off</span>
+            <p className="text-lg">No shifts match the {activeFilter} filter yet.</p>
           </div>
         ) : (
           filteredJobs.map(job => (
@@ -224,7 +224,7 @@ const ProfilePage = ({ user }: { user: User | null }) => {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
     const savedProfile = localStorage.getItem(`ss:profile:${user?.email}`);
@@ -318,20 +318,20 @@ const ProfilePage = ({ user }: { user: User | null }) => {
             <div className="space-y-6">
               <div>
                 <label className="block text-[10px] font-black text-zinc-500 uppercase mb-2">LinkedIn URL</label>
-                <input 
+                <input
                   type="url"
                   value={profile?.linkedInUrl}
-                  onChange={e => setProfile(p => p ? {...p, linkedInUrl: e.target.value} : null)}
+                  onChange={e => setProfile(p => p ? { ...p, linkedInUrl: e.target.value } : null)}
                   placeholder="linkedin.com/in/..."
                   className="w-full px-5 py-3 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-magenta transition-all"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-zinc-500 uppercase mb-2">Portfolio/CV Link</label>
-                <input 
+                <input
                   type="url"
                   value={profile?.portfolioUrl}
-                  onChange={e => setProfile(p => p ? {...p, portfolioUrl: e.target.value} : null)}
+                  onChange={e => setProfile(p => p ? { ...p, portfolioUrl: e.target.value } : null)}
                   placeholder="myportfolio.com"
                   className="w-full px-5 py-3 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-magenta transition-all"
                 />
@@ -341,11 +341,11 @@ const ProfilePage = ({ user }: { user: User | null }) => {
 
           <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-warm-200 dark:border-zinc-800 p-8 shadow-sm">
             <h3 className="font-black mb-6 text-xs uppercase tracking-[0.2em] text-zinc-400">Skills</h3>
-            <textarea 
+            <textarea
               rows={4}
               placeholder="e.g. Retail, Customer Service, Python, Design"
               value={profile?.skills.join(', ')}
-              onChange={e => setProfile(p => p ? {...p, skills: e.target.value.split(',').map(s => s.trim())} : null)}
+              onChange={e => setProfile(p => p ? { ...p, skills: e.target.value.split(',').map(s => s.trim()) } : null)}
               className="w-full px-5 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-magenta transition-all resize-none leading-relaxed"
             ></textarea>
             <p className="text-[10px] text-zinc-400 mt-4 italic font-medium">Separate skills with commas.</p>
@@ -357,10 +357,10 @@ const ProfilePage = ({ user }: { user: User | null }) => {
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-black text-xs uppercase tracking-[0.2em] text-zinc-400">Professional Bio</h3>
             </div>
-            <textarea 
+            <textarea
               rows={5}
               value={profile?.bio}
-              onChange={e => setProfile(p => p ? {...p, bio: e.target.value} : null)}
+              onChange={e => setProfile(p => p ? { ...p, bio: e.target.value } : null)}
               className="w-full px-5 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-2 focus:ring-magenta transition-all text-sm leading-relaxed"
             ></textarea>
           </div>
@@ -415,7 +415,7 @@ const ProfilePage = ({ user }: { user: User | null }) => {
               {saveStatus?.text || 'Profile is ready to save'}
             </span>
           </div>
-          <button 
+          <button
             onClick={handleSave}
             disabled={saving}
             className="bg-magenta text-white px-12 py-4 rounded-2xl font-black text-sm hover:bg-magenta-600 hover:scale-105 transition-all active:scale-95 shadow-xl shadow-magenta/20 disabled:opacity-50"
@@ -438,12 +438,12 @@ const TrackerPage = () => {
         </div>
       </div>
       <div className="bg-white dark:bg-zinc-900 border border-warm-200 dark:border-zinc-800 rounded-[2.5rem] p-24 text-center">
-         <div className="w-24 h-24 bg-magenta/5 rounded-full flex items-center justify-center mx-auto mb-8">
-           <span className="material-symbols-outlined text-6xl text-magenta/30">assignment_turned_in</span>
-         </div>
-         <p className="text-2xl font-bold">No active applications found.</p>
-         <p className="text-zinc-500 mt-4 max-w-sm mx-auto">Once you apply for a shift on the explore page, your status updates will appear right here.</p>
-         <button className="mt-10 bg-magenta text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-magenta/10 hover:scale-105 transition-all">Start Exploring</button>
+        <div className="w-24 h-24 bg-magenta/5 rounded-full flex items-center justify-center mx-auto mb-8">
+          <span className="material-symbols-outlined text-6xl text-magenta/30">assignment_turned_in</span>
+        </div>
+        <p className="text-2xl font-bold">No active applications found.</p>
+        <p className="text-zinc-500 mt-4 max-w-sm mx-auto">Once you apply for a shift on the explore page, your status updates will appear right here.</p>
+        <button className="mt-10 bg-magenta text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-magenta/10 hover:scale-105 transition-all">Start Exploring</button>
       </div>
     </div>
   );
@@ -466,7 +466,7 @@ const EmployerDashboard = ({ jobs, onAddListing }: { jobs: JobListing[], onAddLi
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">New Applicants</p>
         </div>
       </div>
-      
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-4xl font-black tracking-tight">Shift Console</h2>
@@ -488,22 +488,22 @@ const EmployerDashboard = ({ jobs, onAddListing }: { jobs: JobListing[], onAddLi
         ) : (
           jobs.map(job => (
             <div key={job.id} className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-warm-200 dark:border-zinc-800 p-8 flex items-center gap-10 group hover:shadow-2xl hover:border-magenta/20 transition-all">
-               <img src={job.logo || `https://picsum.photos/seed/${job.id}/200`} className="w-20 h-20 rounded-[1.5rem] object-cover shadow-sm group-hover:scale-110 transition-transform duration-500" alt="" />
-               <div className="flex-1">
-                  <h3 className="font-black text-2xl group-hover:text-magenta transition-colors">{job.title}</h3>
-                  <div className="flex items-center gap-6 mt-3">
-                    <p className="text-xs text-zinc-500 font-bold flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">group</span>
-                      {job.applicantCount || 0} Applicants Applied
-                    </p>
-                    <div className="h-4 w-px bg-warm-200 dark:bg-zinc-800"></div>
-                    <p className="text-xs text-green-500 font-black uppercase tracking-widest">Active Status</p>
-                  </div>
-               </div>
-               <div className="flex gap-3">
-                 <button className="px-8 py-3 text-zinc-500 hover:bg-warm-50 dark:hover:bg-zinc-800 rounded-2xl text-xs font-black transition-all">Manage Applicants</button>
-                 <button className="px-8 py-3 bg-warm-50 dark:bg-zinc-800 text-magenta rounded-2xl text-xs font-black hover:bg-magenta hover:text-white transition-all">Edit Listing</button>
-               </div>
+              <img src={job.logo || `https://picsum.photos/seed/${job.id}/200`} className="w-20 h-20 rounded-[1.5rem] object-cover shadow-sm group-hover:scale-110 transition-transform duration-500" alt="" />
+              <div className="flex-1">
+                <h3 className="font-black text-2xl group-hover:text-magenta transition-colors">{job.title}</h3>
+                <div className="flex items-center gap-6 mt-3">
+                  <p className="text-xs text-zinc-500 font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">group</span>
+                    {job.applicantCount || 0} Applicants Applied
+                  </p>
+                  <div className="h-4 w-px bg-warm-200 dark:bg-zinc-800"></div>
+                  <p className="text-xs text-green-500 font-black uppercase tracking-widest">Active Status</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button className="px-8 py-3 text-zinc-500 hover:bg-warm-50 dark:hover:bg-zinc-800 rounded-2xl text-xs font-black transition-all">Manage Applicants</button>
+                <button className="px-8 py-3 bg-warm-50 dark:bg-zinc-800 text-magenta rounded-2xl text-xs font-black hover:bg-magenta hover:text-white transition-all">Edit Listing</button>
+              </div>
             </div>
           ))
         )}
@@ -514,7 +514,7 @@ const EmployerDashboard = ({ jobs, onAddListing }: { jobs: JobListing[], onAddLi
 
 const CreateJobPage = ({ onCancel, onSubmit, companyName }: { onCancel: () => void, onSubmit: (job: Partial<JobListing>) => void, companyName: string }) => {
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{type: 'error' | 'success', text: string} | null>(null);
+  const [status, setStatus] = useState<{ type: 'error' | 'success', text: string } | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     location: '',
@@ -577,20 +577,20 @@ const CreateJobPage = ({ onCancel, onSubmit, companyName }: { onCancel: () => vo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Listing Title</label>
-              <input 
-                placeholder="e.g. Student Barista" 
-                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-bold text-lg" 
-                value={formData.title} 
-                onChange={e => setFormData({...formData, title: e.target.value})} 
+              <input
+                placeholder="e.g. Student Barista"
+                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-bold text-lg"
+                value={formData.title}
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Campus / Location</label>
-              <input 
-                placeholder="e.g. Dublin 2, UCD Belfield..." 
-                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-bold text-lg" 
-                value={formData.location} 
-                onChange={e => setFormData({...formData, location: e.target.value})} 
+              <input
+                placeholder="e.g. Dublin 2, UCD Belfield..."
+                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-bold text-lg"
+                value={formData.location}
+                onChange={e => setFormData({ ...formData, location: e.target.value })}
               />
             </div>
           </div>
@@ -599,41 +599,41 @@ const CreateJobPage = ({ onCancel, onSubmit, companyName }: { onCancel: () => vo
             <div className="flex justify-between items-center mb-1">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Role Description</label>
             </div>
-            <textarea 
+            <textarea
               rows={6}
               placeholder="Detail the shift duties, hours, and expectations..."
               className="w-full p-6 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-3xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all text-sm leading-relaxed"
               value={formData.description}
-              onChange={e => setFormData({...formData, description: e.target.value})}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
             ></textarea>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Min Rate (€/hr)</label>
-              <input 
-                type="number" step="0.5" 
-                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-black text-xl" 
-                value={formData.salaryMin} 
-                onChange={e => setFormData({...formData, salaryMin: e.target.value})} 
+              <input
+                type="number" step="0.5"
+                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-black text-xl"
+                value={formData.salaryMin}
+                onChange={e => setFormData({ ...formData, salaryMin: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Max Rate (€/hr)</label>
-              <input 
-                type="number" step="0.5" 
-                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-black text-xl" 
-                value={formData.salaryMax} 
-                onChange={e => setFormData({...formData, salaryMax: e.target.value})} 
+              <input
+                type="number" step="0.5"
+                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-black text-xl"
+                value={formData.salaryMax}
+                onChange={e => setFormData({ ...formData, salaryMax: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Apply By</label>
-              <input 
-                type="date" 
-                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-bold" 
-                value={formData.deadline} 
-                onChange={e => setFormData({...formData, deadline: e.target.value})} 
+              <input
+                type="date"
+                className="w-full px-6 py-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-2xl outline-none focus:ring-4 focus:ring-magenta/10 transition-all font-bold"
+                value={formData.deadline}
+                onChange={e => setFormData({ ...formData, deadline: e.target.value })}
               />
             </div>
           </div>
@@ -652,7 +652,7 @@ const App: React.FC = () => {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  
+
   useEffect(() => {
     const savedUserRaw = localStorage.getItem('ss:user');
     if (savedUserRaw && savedUserRaw !== 'null') {
@@ -670,11 +670,17 @@ const App: React.FC = () => {
     }
 
     const savedJobs = localStorage.getItem('ss:jobs');
-    if (savedJobs && JSON.parse(savedJobs).length > 0) {
-      setJobs(JSON.parse(savedJobs));
-    } else {
-      setJobs(MOCK_JOBS);
-    }
+    // Always try to fetch fresh jobs from API
+    apiService.getJobs().then(fetchedJobs => {
+      if (fetchedJobs && fetchedJobs.length > 0) {
+        setJobs(fetchedJobs);
+      } else if (savedJobs) {
+        setJobs(JSON.parse(savedJobs));
+      } else {
+        // Only fall back to mocks if absolutely nothing else
+        setJobs(MOCK_JOBS);
+      }
+    });
 
     const savedMsgs = localStorage.getItem('ss:messages');
     if (savedMsgs) {
@@ -718,7 +724,7 @@ const App: React.FC = () => {
       id: Math.random().toString(36).substr(2, 9),
       logo: `https://picsum.photos/seed/${Math.random()}/200`,
     } as JobListing;
-    
+
     setJobs(prev => [newJob, ...prev]);
     setScreen('dashboard');
   };
@@ -751,10 +757,10 @@ const App: React.FC = () => {
           <div className="w-28 h-28 bg-magenta/10 rounded-[2rem] flex items-center justify-center mx-auto mb-10 shadow-inner">
             <span className="material-symbols-outlined text-6xl text-magenta">campaign</span>
           </div>
-          <h2 className="text-5xl font-black tracking-tight leading-tight">Post your shifts. <br/>Hire student talent.</h2>
+          <h2 className="text-5xl font-black tracking-tight leading-tight">Post your shifts. <br />Hire student talent.</h2>
           <p className="text-zinc-500 text-lg leading-relaxed">Join hundreds of Irish businesses finding reliable part-time help on our campus marketplace.</p>
-          <button 
-            onClick={() => setShowAuthModal(true)} 
+          <button
+            onClick={() => setShowAuthModal(true)}
             className="bg-magenta text-white px-12 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-magenta/20 hover:scale-105 hover:bg-magenta-600 transition-all active:scale-95"
           >
             Join as an Employer
@@ -764,14 +770,14 @@ const App: React.FC = () => {
     }
 
     if (user.mode === UserMode.STUDENT) {
-      switch(screen) {
+      switch (screen) {
         case 'feed': return <JobFeed jobs={jobs} onJobClick={(id) => setSelectedJobId(id)} />;
         case 'profile': return <ProfilePage user={user} />;
         case 'tracker': return <TrackerPage />;
         default: return <JobFeed jobs={jobs} onJobClick={(id) => setSelectedJobId(id)} />;
       }
     } else {
-      switch(screen) {
+      switch (screen) {
         case 'dashboard': return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} />;
         case 'inbox': return <InboxPage messages={messages} jobs={jobs} />;
         case 'create-job': return <CreateJobPage companyName={user?.firstName || 'Company'} onCancel={() => setScreen('dashboard')} onSubmit={handlePostJob} />;
@@ -783,10 +789,10 @@ const App: React.FC = () => {
   const selectedJob = jobs.find(j => j.id === selectedJobId);
 
   return (
-    <Layout 
-      user={user} 
-      activeMode={mode} 
-      onModeSwitch={(m) => { setMode(m); if (!user) setScreen(m === UserMode.STUDENT ? 'feed' : 'dashboard'); }} 
+    <Layout
+      user={user}
+      activeMode={mode}
+      onModeSwitch={(m) => { setMode(m); if (!user) setScreen(m === UserMode.STUDENT ? 'feed' : 'dashboard'); }}
       onLogout={handleLogout}
       darkMode={darkMode}
       toggleDarkMode={() => setDarkMode(!darkMode)}
@@ -797,9 +803,9 @@ const App: React.FC = () => {
       {renderContent()}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleLoginSuccess} />}
       {selectedJob && (
-        <JobDetails 
-          job={selectedJob} 
-          onClose={() => setSelectedJobId(null)} 
+        <JobDetails
+          job={selectedJob}
+          onClose={() => setSelectedJobId(null)}
           onMessage={handleSendMessage}
           canMessage={!!user && user.mode === UserMode.STUDENT}
         />
