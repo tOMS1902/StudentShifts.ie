@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { Job } from '../models/Job.ts';
-import { requireAuth, AuthRequest } from '../middleware/auth.ts';
+import { Job } from '../models/Job';
+import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 

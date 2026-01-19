@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { requireAuth, AuthRequest } from '../middleware/auth.ts';
-import { StudentProfile } from '../models/StudentProfile.ts';
+import { requireAuth, AuthRequest } from '../middleware/auth';
+import { StudentProfile } from '../models/StudentProfile';
 
 const router = Router();
 

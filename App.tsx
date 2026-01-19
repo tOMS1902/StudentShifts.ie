@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Layout from './components/Layout.tsx';
-import AuthModal from './components/AuthModal.tsx';
-import { User, UserMode, StudentProfile, JobListing, Message, Experience } from './types.ts';
-import { MOCK_JOBS } from './constants.tsx';
-import JobCard from './components/JobCard.tsx';
-import { apiService } from './services/apiService.ts';
+import Layout from './components/Layout';
+import AuthModal from './components/AuthModal';
+import { User, UserMode, StudentProfile, JobListing, Message, Experience } from './types';
+import { MOCK_JOBS } from './constants';
+import JobCard from './components/JobCard';
+import { apiService } from './services/apiService';
 
 type Screen = 'feed' | 'profile' | 'tracker' | 'dashboard' | 'create-job' | 'inbox';
 

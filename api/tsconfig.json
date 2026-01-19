@@ -1,0 +1,15 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "noEmit": false,
+        "allowImportingTsExtensions": false,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ESNext",
+        "outDir": "../.vercel/output/functions"
+    },
+    "include": [
+        "**/*",
+        "../server/**/*"
+    ]
+}

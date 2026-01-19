@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { User } from '../models/User.ts';
-import { signToken } from '../utils/token.ts';
+import { User } from '../models/User';
+import { signToken } from '../utils/token';
 
 const router = Router();
 

@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { UserMode } from '../types.ts';
-import { IRISH_UNIVERSITIES } from '../constants.tsx';
-import { apiService } from '../services/apiService.ts';
+import { UserMode } from '../types';
+import { IRISH_UNIVERSITIES } from '../constants';
+import { apiService } from '../services/apiService';
 
 interface AuthModalProps {
   onClose: () => void;
