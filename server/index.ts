@@ -13,7 +13,10 @@ import messageRoutes from './routes/messages.ts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.join(__dirname, '.env') });
+// Only load dotenv in local development
+if (!process.env.VERCEL) {
+  dotenv.config({ path: path.join(__dirname, '.env') });
+}
 
 const app = express();
 const port = process.env.PORT || 4000;
