@@ -1,0 +1,121 @@
+
+import { JobListing, Application } from './types.ts';
+
+// Realistic Irish student job listings for testing
+export const MOCK_JOBS: JobListing[] = [
+  {
+    id: 'job-1',
+    title: 'Weekend Barista',
+    company: 'Proper Order Coffee Co.',
+    location: 'Smithfield, Dublin 7',
+    logo: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&h=200&fit=crop',
+    salaryMin: 13.00,
+    salaryMax: 15.50,
+    tags: ['Part-time', 'Dublin 7', 'Hospitality'],
+    description: 'We are looking for an energetic student to join our weekend team. Experience with specialty coffee is a plus, but a great attitude is essential!',
+    responsibilities: ['Preparing coffee', 'Customer service', 'Maintaining cleanliness'],
+    skills: ['Communication', 'Punctuality'],
+    status: 'active',
+    deadline: '2025-05-01',
+    contact: 'jobs@properorder.ie',
+    applicantCount: 12,
+    postedAt: '2 days ago'
+  },
+  {
+    id: 'job-2',
+    title: 'Leaving Cert Math Tutor',
+    company: 'Grinds Academy',
+    location: 'Remote / Dublin 4',
+    logo: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=200&h=200&fit=crop',
+    salaryMin: 25.00,
+    salaryMax: 35.00,
+    tags: ['Flexible', 'Remote', 'Academic'],
+    description: 'Help secondary school students ace their exams. Must have achieved a H1 in Leaving Cert Mathematics.',
+    responsibilities: ['Weekly 1-hour sessions', 'Explaining complex concepts', 'Exam paper practice'],
+    skills: ['Mathematics', 'Teaching'],
+    status: 'active',
+    deadline: '2025-04-15',
+    contact: 'tutors@grinds.ie',
+    applicantCount: 5,
+    postedAt: '4 hours ago'
+  },
+  {
+    id: 'job-3',
+    title: 'Retail Assistant',
+    company: 'Dubray Books',
+    location: 'Patrick St, Cork City',
+    logo: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=200&h=200&fit=crop',
+    salaryMin: 12.70,
+    salaryMax: 13.50,
+    tags: ['Part-time', 'Retail', 'Cork'],
+    description: 'Join the team at one of Ireland\'s favorite bookstores. Perfect for students with a passion for literature.',
+    responsibilities: ['Shelving books', 'Processing sales', 'Recommending reads'],
+    skills: ['Literacy', 'Customer Care'],
+    status: 'active',
+    deadline: '2025-05-20',
+    contact: 'cork@dubray.ie',
+    applicantCount: 28,
+    postedAt: '1 week ago'
+  },
+  {
+    id: 'job-4',
+    title: 'Campus Brand Ambassador',
+    company: 'Red Bull Ireland',
+    location: 'UCD / TCD / DCU',
+    logo: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop',
+    salaryMin: 15.00,
+    salaryMax: 18.00,
+    tags: ['Flexible', 'Marketing', 'Campus'],
+    description: 'Be the face of Red Bull on your campus. Organise events, sample products, and build the brand community.',
+    responsibilities: ['Product sampling', 'Social media promotion', 'Event support'],
+    skills: ['Social Media', 'Networking'],
+    status: 'active',
+    deadline: '2025-06-01',
+    contact: 'careers@redbull.ie',
+    applicantCount: 45,
+    postedAt: 'Just now'
+  },
+  {
+    id: 'job-5',
+    title: 'Student Library Assistant',
+    company: 'University College Dublin',
+    location: 'James Joyce Library, Belfield',
+    logo: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=200&h=200&fit=crop',
+    salaryMin: 12.70,
+    salaryMax: 12.70,
+    tags: ['On-Campus', 'Evening Shift', 'UCD'],
+    description: 'Evening and weekend shifts available for UCD students. Assisting with library operations and student queries.',
+    responsibilities: ['Scanning IDs', 'Shelf tidying', 'Basic IT help'],
+    skills: ['Organization', 'Reliability'],
+    status: 'active',
+    deadline: '2025-04-30',
+    contact: 'libraryjobs@ucd.ie',
+    applicantCount: 8,
+    postedAt: 'Yesterday'
+  }
+];
+
+export const MOCK_APPLICATIONS: Application[] = [];
+
+export const IRISH_UNIVERSITIES = [
+  "University College Dublin (UCD)",
+  "Trinity College Dublin (TCD)",
+  "Dublin City University (DCU)",
+  "University College Cork (UCC)",
+  "University of Galway",
+  "University of Limerick (UL)",
+  "Maynooth University (MU)",
+  "Technological University Dublin (TU Dublin)",
+  "Munster Technological University (MTU)",
+  "Atlantic Technological University (ATU)",
+  "South East Technological University (SETU)",
+  "Technological University of the Shannon (TUS)",
+  "National College of Ireland (NCI)",
+  "Royal College of Surgeons in Ireland (RCSI)",
+  "Mary Immaculate College (MIC)",
+  "St. Angela's College",
+  "Dublin Business School (DBS)",
+  "Griffith College",
+  "Dun Laoghaire Institute of Art, Design and Technology (IADT)",
+  "National College of Art and Design (NCAD)"
+].sort();

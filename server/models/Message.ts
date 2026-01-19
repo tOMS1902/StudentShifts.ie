@@ -1,0 +1,24 @@
+import { Schema, model, Types } from 'mongoose';
+
+export interface IMessage {
+  jobId: Types.ObjectId;
+  studentId: Types.ObjectId;
+  studentName: string;
+  text: string;
+  timestamp: Date;
+  isRead: boolean;
+}
+
+const messageSchema = new Schema<IMessage>(
+  {
+    jobId: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
+    studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    studentName: { type: String, required: true },
+    text: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    isRead: { type: Boolean, default: false }
+  },
+  { timestamps: true }
+);
+
+export const Message = model<IMessage>('Message', messageSchema);

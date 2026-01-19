@@ -1,0 +1,9 @@
+
+{
+  "name": "StudentShifts.ie",
+  "description": "A campus job marketplace connecting Irish students and local employers with a mobile-first, high-performance interface.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
