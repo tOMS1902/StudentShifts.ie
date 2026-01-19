@@ -86,6 +86,19 @@ export const apiService = {
     }
   },
 
+  async getJobs(): Promise<JobListing[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/jobs`);
+      if (!response.ok) throw new Error('Failed to fetch jobs');
+      const jobs = await response.json();
+      // Map _id to id for frontend
+      return jobs.map((j: any) => ({ ...j, id: j._id || j.id }));
+    } catch (error) {
+      console.error('Get Jobs Error:', error);
+      return [];
+    }
+  },
+
   // Job Management
   async postJob(job: Partial<JobListing>): Promise<JobListing | null> {
     // Similar to save profile, needs auth
