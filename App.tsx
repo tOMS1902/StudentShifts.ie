@@ -501,7 +501,329 @@ const TrackerPage = () => {
   );
 };
 
-const EmployerDashboard = ({ jobs, onAddListing }: { jobs: JobListing[], onAddListing: () => void }) => {
+// --- Component: Profile Setup Wizard (Web) ---
+const ProfileSetupWizard = ({ onComplete }: { onComplete: () => void }) => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    university: '',
+    dob: '',
+    bio: '',
+    skills: ['Customer Service', 'Hospitality'],
+    experience: ''
+  });
+  const [newSkill, setNewSkill] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Hardcoded for now, same as mobile
+  const UNIVERSITIES = [
+    'Trinity College Dublin (TCD)',
+    'University College Dublin (UCD)',
+    'Dublin City University (DCU)',
+    'TU Dublin',
+    'University College Cork (UCC)',
+    'University of Galway'
+  ];
+
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
+      setFormData(prev => ({ ...prev, skills: [...prev.skills, newSkill.trim()] }));
+      setNewSkill('');
+    }
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Construct profile object matching backend expectation
+      const profileData: any = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        university: formData.university,
+        dob: formData.dob,
+        bio: formData.bio,
+        skills: formData.skills,
+        experience: formData.experience ? [{
+          role: 'Background',
+          company: 'Experience',
+          period: formData.experience
+        }] : []
+      };
+
+      const success = await apiService.saveStudentProfile(profileData);
+      if (success) {
+        onComplete();
+      } else {
+        alert('Failed to save profile. Please try again.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error saving profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-8 border-b border-warm-100 dark:border-zinc-800 bg-warm-50/50 dark:bg-zinc-900 sticky top-0 z-10">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-black">Profile Setup</h2>
+            <span className="text-magenta font-bold">Step {step} of 3</span>
+          </div>
+          <div className="h-2 bg-warm-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+            <div className={`h-full bg-magenta transition-all duration-500 ease-out`} style={{ width: step === 1 ? '33%' : step === 2 ? '66%' : '100%' }}></div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          {step === 1 && (
+            <div className="space-y-6 animate-in slide-in-from-right-4">
+              <h3 className="text-xl font-bold">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-zinc-400">First Name</label>
+                  <input
+                    value={formData.firstName}
+                    onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full p-4 bg-warm-50 dark:bg-zinc-800 rounded-xl border border-warm-200 dark:border-zinc-700 outline-none focus:border-magenta"
+                    placeholder="e.g. Seán"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-zinc-400">Last Name</label>
+                  <input
+                    value={formData.lastName}
+                    onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full p-4 bg-warm-50 dark:bg-zinc-800 rounded-xl border border-warm-200 dark:border-zinc-700 outline-none focus:border-magenta"
+                    placeholder="e.g. O'Connor"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-zinc-400">University</label>
+                <select
+                  value={formData.university}
+                  onChange={e => setFormData({ ...formData, university: e.target.value })}
+                  className="w-full p-4 bg-warm-50 dark:bg-zinc-800 rounded-xl border border-warm-200 dark:border-zinc-700 outline-none focus:border-magenta appearance-none"
+                >
+                  <option value="">Select Institution</option>
+                  {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-zinc-400">Date of Birth</label>
+                <input
+                  type="date"
+                  value={formData.dob}
+                  onChange={e => setFormData({ ...formData, dob: e.target.value })}
+                  className="w-full p-4 bg-warm-50 dark:bg-zinc-800 rounded-xl border border-warm-200 dark:border-zinc-700 outline-none focus:border-magenta"
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-6 animate-in slide-in-from-right-4">
+              <h3 className="text-xl font-bold">Experience & Skills</h3>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-zinc-400">Work Experience / Background</label>
+                <textarea
+                  value={formData.experience}
+                  onChange={e => setFormData({ ...formData, experience: e.target.value })}
+                  className="w-full p-4 bg-warm-50 dark:bg-zinc-800 rounded-xl border border-warm-200 dark:border-zinc-700 outline-none focus:border-magenta h-32"
+                  placeholder="Describe previous roles, volunteering, or societies..."
+                ></textarea>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-zinc-400">Skills</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {formData.skills.map(s => (
+                    <span key={s} className="px-3 py-1 bg-magenta/10 text-magenta rounded-full text-sm font-bold flex items-center gap-2">
+                      {s}
+                      <button onClick={() => setFormData(p => ({ ...p, skills: p.skills.filter(x => x !== s) }))} className="hover:text-red-500">×</button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={newSkill}
+                    onChange={e => setNewSkill(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAddSkill()}
+                    className="flex-1 p-3 bg-warm-50 dark:bg-zinc-800 rounded-xl border border-warm-200 dark:border-zinc-700 outline-none focus:border-magenta"
+                    placeholder="Add a skill (e.g. Retail)"
+                  />
+                  <button onClick={handleAddSkill} className="px-4 bg-zinc-200 dark:bg-zinc-700 rounded-xl font-bold">+</button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-zinc-400">Short Bio</label>
+                <textarea
+                  value={formData.bio}
+                  onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                  className="w-full p-4 bg-warm-50 dark:bg-zinc-800 rounded-xl border border-warm-200 dark:border-zinc-700 outline-none focus:border-magenta h-24"
+                  placeholder="Briefly describe yourself..."
+                ></textarea>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="text-center space-y-8 animate-in slide-in-from-right-4">
+              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto text-4xl">🎉</div>
+              <h3 className="text-3xl font-black">Profile Ready!</h3>
+              <div className="bg-warm-50 dark:bg-zinc-800 p-6 rounded-2xl text-left border border-warm-200 dark:border-zinc-700 max-w-md mx-auto">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-zinc-300 rounded-full"></div>
+                  <div>
+                    <p className="font-bold text-lg">{formData.firstName} {formData.lastName}</p>
+                    <p className="text-sm text-zinc-500">{formData.university}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {formData.skills.map(s => <span key={s} className="text-xs bg-white dark:bg-zinc-900 border px-2 py-1 rounded-full">{s}</span>)}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-warm-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex justify-between">
+          <button
+            onClick={() => step > 1 && setStep(step - 1)}
+            className={`px-6 py-3 font-bold text-zinc-500 ${step === 1 ? 'invisible' : ''}`}
+          >
+            Back
+          </button>
+          <button
+            onClick={() => {
+              if (step < 3) setStep(step + 1);
+              else handleSave();
+            }}
+            disabled={loading}
+            className="px-8 py-3 bg-magenta text-white rounded-xl font-bold shadow-lg shadow-magenta/20 hover:scale-105 transition-all"
+          >
+            {loading ? 'Saving...' : step === 3 ? 'Complete Setup' : 'Continue'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Component: Applicant List Modal ---
+const ManageApplicantsModal = ({ job, onClose }: { job: JobListing, onClose: () => void }) => {
+  const [applicants, setApplicants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedApplicant, setSelectedApplicant] = useState<any | null>(null);
+
+  useEffect(() => {
+    // Mock fetch or simple one since endpoint for employer to get applicants might be missing in `apiService`
+    // We'll quickly add a fetch here or assume standard route
+    const fetchApplicants = async () => {
+      try {
+        const userStr = localStorage.getItem('ss:user');
+        const token = userStr ? JSON.parse(userStr).token : '';
+        const res = await fetch(`/api/applications/job/${job.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setApplicants(data);
+        } else {
+          // Fallback to empty if 404 or fails
+          setApplicants([]);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchApplicants();
+  }, [job.id]);
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-white dark:bg-zinc-900 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex h-[80vh]">
+        <div className="w-1/3 border-r border-warm-200 dark:border-zinc-800 flex flex-col">
+          <div className="p-6 border-b border-warm-200 dark:border-zinc-800">
+            <h3 className="font-bold text-lg">Applicants</h3>
+            <p className="text-xs text-zinc-500">{job.title}</p>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {loading && <div className="p-6 text-center text-zinc-400">Loading...</div>}
+            {!loading && applicants.length === 0 && <div className="p-6 text-center text-zinc-400">No applicants yet.</div>}
+            {applicants.map(app => (
+              <button
+                key={app._id}
+                onClick={() => setSelectedApplicant(app)}
+                className={`w-full p-4 text-left border-b border-warm-100 dark:border-zinc-800 hover:bg-warm-50 dark:hover:bg-zinc-800 transition-colors ${selectedApplicant?._id === app._id ? 'bg-magenta/5 border-l-4 border-l-magenta' : ''}`}
+              >
+                <p className="font-bold">{app.studentId?.firstName || 'Student'} {app.studentId?.lastName}</p>
+                <p className="text-xs text-zinc-500">{app.studentId?.university}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col bg-warm-50/50 dark:bg-zinc-900/50">
+          <div className="p-4 flex justify-end">
+            <button onClick={onClose} className="p-2 hover:bg-zinc-200 rounded-full"><span className="material-symbols-outlined">close</span></button>
+          </div>
+          {selectedApplicant ? (
+            <div className="p-8 flex-1 overflow-y-auto">
+              <div className="flex items-center gap-6 mb-8">
+                <div className="w-20 h-20 bg-zinc-300 rounded-full flex items-center justify-center text-2xl font-bold text-zinc-500">
+                  {(selectedApplicant.studentId?.firstName || 'S').charAt(0)}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black">{selectedApplicant.studentId?.firstName} {selectedApplicant.studentId?.lastName}</h2>
+                  <p className="text-lg text-zinc-500">{selectedApplicant.studentId?.university}</p>
+                  <p className="text-sm text-zinc-400">{selectedApplicant.studentId?.degree}</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-warm-100 dark:border-zinc-800">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Bio</h4>
+                  <p className="leading-relaxed">{selectedApplicant.studentId?.bio || 'No bio provided.'}</p>
+                </div>
+
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-warm-100 dark:border-zinc-800">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Experience</h4>
+                  {(selectedApplicant.studentId?.experience || []).map((exp: any, i: number) => (
+                    <div key={i} className="mb-2 last:mb-0">
+                      <p className="font-bold">{exp.role} at {exp.company}</p>
+                      <p className="text-xs text-zinc-500">{exp.period}</p>
+                    </div>
+                  ))}
+                  {(!selectedApplicant.studentId?.experience || selectedApplicant.studentId?.experience.length === 0) && <p className="text-zinc-400 text-sm">No experience listed.</p>}
+                </div>
+
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-warm-100 dark:border-zinc-800">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Skills</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedApplicant.studentId?.skills || []).map((s: string) => (
+                      <span key={s} className="px-3 py-1 bg-magenta/10 text-magenta rounded-full text-xs font-bold">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-zinc-400">
+              Select an applicant to view details
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EmployerDashboard = ({ jobs, onAddListing, onManageApplicants }: { jobs: JobListing[], onAddListing: () => void, onManageApplicants: (job: JobListing) => void }) => {
   return (
     <div className="space-y-10 animate-in fade-in duration-500 max-w-7xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -509,11 +831,6 @@ const EmployerDashboard = ({ jobs, onAddListing }: { jobs: JobListing[], onAddLi
           <h4 className="text-5xl font-black text-magenta">{jobs.length}</h4>
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">Live Listings</p>
         </div>
-        {/* Monthly Views hidden as per request */}
-        {/* <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2rem] border border-warm-200 dark:border-zinc-800 shadow-sm transition-transform hover:-translate-y-1">
-          <h4 className="text-5xl font-black">2.4k</h4>
-          <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">Monthly Views</p>
-        </div> */}
         <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2rem] border border-warm-200 dark:border-zinc-800 shadow-sm transition-transform hover:-translate-y-1">
           <h4 className="text-5xl font-black text-green-500">18</h4>
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">New Applicants</p>
@@ -554,7 +871,7 @@ const EmployerDashboard = ({ jobs, onAddListing }: { jobs: JobListing[], onAddLi
                 </div>
               </div>
               <div className="flex gap-3">
-                <button className="px-8 py-3 text-zinc-500 hover:bg-warm-50 dark:hover:bg-zinc-800 rounded-2xl text-xs font-black transition-all">Manage Applicants</button>
+                <button onClick={() => onManageApplicants(job)} className="px-8 py-3 text-zinc-500 hover:bg-warm-50 dark:hover:bg-zinc-800 rounded-2xl text-xs font-black transition-all">Manage Applicants</button>
                 <button className="px-8 py-3 bg-warm-50 dark:bg-zinc-800 text-magenta rounded-2xl text-xs font-black hover:bg-magenta hover:text-white transition-all">Edit Listing</button>
               </div>
             </div>
@@ -702,7 +1019,9 @@ const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>('feed');
   const [darkMode, setDarkMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfileWizard, setShowProfileWizard] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [manageJob, setManageJob] = useState<JobListing | null>(null);
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -715,6 +1034,17 @@ const App: React.FC = () => {
           setUser(parsed);
           setMode(parsed.mode);
           setScreen(parsed.mode === UserMode.EMPLOYER ? 'dashboard' : 'feed');
+
+          if (parsed.mode === UserMode.STUDENT) {
+            const id = parsed.studentId || '';
+            if (id) {
+              apiService.getStudentProfile(id).then(p => {
+                if (!p || (!p.firstName && !p.university)) {
+                  setShowProfileWizard(true);
+                }
+              });
+            }
+          }
         }
       } catch (error) {
         console.warn('Corrupt saved user detected. Clearing cache.', error);
@@ -764,11 +1094,26 @@ const App: React.FC = () => {
     else document.documentElement.classList.remove('dark');
   }, [darkMode]);
 
+  const checkProfile = async (id: string) => {
+    if (!id) return;
+    try {
+      const p = await apiService.getStudentProfile(id);
+      if (!p || (!p.firstName && !p.university)) {
+        setShowProfileWizard(true);
+      }
+    } catch (e) {
+      console.error("Profile check failed", e);
+    }
+  };
+
   const handleLoginSuccess = (userData: User) => {
     setUser(userData);
     setMode(userData.mode);
     setScreen(userData.mode === UserMode.EMPLOYER ? 'dashboard' : 'feed');
     setShowAuthModal(false);
+    if (userData.mode === UserMode.STUDENT) {
+      checkProfile(userData.studentId || '');
+    }
   };
 
   const handlePostJob = async (newJobData: Partial<JobListing>) => {
@@ -811,7 +1156,8 @@ const App: React.FC = () => {
       studentName: user.firstName || 'Anonymous Student',
       text,
       timestamp: new Date().toLocaleString(),
-      isRead: false
+      senderRole: 'student', // Assuming student sends this legacy message
+      isMe: true
     };
     setMessages(prev => [newMessage, ...prev]);
   };
@@ -845,10 +1191,10 @@ const App: React.FC = () => {
       }
     } else {
       switch (screen) {
-        case 'dashboard': return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} />;
+        case 'dashboard': return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} onManageApplicants={(j) => setManageJob(j)} />;
         case 'inbox': return <InboxPage messages={messages} jobs={jobs} />;
         case 'create-job': return <CreateJobPage companyName={user?.firstName || 'Company'} onCancel={() => setScreen('dashboard')} onSubmit={handlePostJob} />;
-        default: return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} />;
+        default: return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} onManageApplicants={(j) => setManageJob(j)} />;
       }
     }
   };
@@ -869,13 +1215,16 @@ const App: React.FC = () => {
     >
       {renderContent()}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleLoginSuccess} />}
+      {showProfileWizard && <ProfileSetupWizard onComplete={() => setShowProfileWizard(false)} />}
       {selectedJob && (
         <JobDetails
           job={selectedJob}
           onClose={() => setSelectedJobId(null)}
-          onMessage={handleSendMessage}
           canMessage={!!user && user.mode === UserMode.STUDENT}
         />
+      )}
+      {manageJob && (
+        <ManageApplicantsModal job={manageJob} onClose={() => setManageJob(null)} />
       )}
     </Layout>
   );

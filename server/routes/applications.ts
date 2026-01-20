@@ -59,12 +59,27 @@ router.get('/me', requireAuth(['student']), async (req: AuthRequest, res) => {
 // Get applications for a job (Employer)
 router.get('/job/:jobId', requireAuth(['employer']), async (req: AuthRequest, res) => {
     try {
+        const { StudentProfile } = await import('../models/StudentProfile.js');
+
         // Verify ownership of job? For now just return list
         const applications = await Application.find({ jobId: req.params.jobId })
             .populate('studentId', 'firstName lastName email') // Populate user details
-            .sort({ appliedAt: -1 });
+            .sort({ appliedAt: -1 })
+            .lean();
 
-        res.json(applications);
+        // Enhance with profile data
+        const enhancedApplications = await Promise.all(applications.map(async (app: any) => {
+            if (app.studentId?._id) {
+                const profile = await StudentProfile.findOne({ userId: app.studentId._id });
+                if (profile) {
+                    // Merge profile data into studentId object
+                    app.studentId = { ...app.studentId, ...profile.toObject() };
+                }
+            }
+            return app;
+        }));
+
+        res.json(enhancedApplications);
     } catch (error) {
         console.error('Get job applications error:', error);
         res.status(500).json({ error: 'Failed to fetch applicants' });
