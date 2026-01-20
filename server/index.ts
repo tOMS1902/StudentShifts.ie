@@ -34,7 +34,7 @@ if (!mongoUri) {
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (_req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
