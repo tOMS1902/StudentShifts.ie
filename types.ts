@@ -48,10 +48,12 @@ export interface StudentProfile {
 
 export interface JobListing {
   id: string;
+  _id?: string; // MongoDB ID from backend
   title: string;
   company: string;
   location: string;
   logo: string;
+  logoUrl?: string; // Backend might return logoUrl
   salaryMin: number;
   salaryMax: number;
   tags: string[];

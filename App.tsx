@@ -719,15 +719,29 @@ const App: React.FC = () => {
     setShowAuthModal(false);
   };
 
-  const handlePostJob = (newJobData: Partial<JobListing>) => {
-    const newJob: JobListing = {
-      ...newJobData,
-      id: Math.random().toString(36).substr(2, 9),
-      logo: `https://picsum.photos/seed/${Math.random()}/200`,
-    } as JobListing;
+  const handlePostJob = async (newJobData: Partial<JobListing>) => {
+    try {
+      const savedJob = await apiService.postJob({
+        ...newJobData,
+        // Ensure numbers are numbers, backend expects numbers
+        salaryMin: Number(newJobData.salaryMin),
+        salaryMax: Number(newJobData.salaryMax),
+      });
+      // Backend returns the full job with _id, map it to frontend structure if needed
+      // Our frontend 'JobListing' uses 'id', backend uses '_id'. 
+      // We should normalize this, but for now let's just make sure it saves.
+      const compatibleJob: JobListing = {
+        ...savedJob,
+        id: savedJob._id || savedJob.id, // Handle both
+        logo: savedJob.logoUrl || `https://picsum.photos/seed/${Math.random()}/200`
+      };
 
-    setJobs(prev => [newJob, ...prev]);
-    setScreen('dashboard');
+      setJobs(prev => [compatibleJob, ...prev]);
+      setScreen('dashboard');
+    } catch (error) {
+      console.error("Failed to post job:", error);
+      alert("Failed to save job to database. Check console details.");
+    }
   };
 
   const handleLogout = () => {

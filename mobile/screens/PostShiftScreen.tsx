@@ -1,0 +1,289 @@
+
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Platform, KeyboardAvoidingView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
+export default function PostShiftScreen() {
+    const navigation = useNavigation();
+    const [step, setStep] = useState(1);
+    // Basic state for demo
+    const [jobTitle, setJobTitle] = useState('');
+    const [date, setDate] = useState('');
+
+    const renderSteps = () => (
+        <View style={styles.stepContainer}>
+            <View style={[styles.stepBar, step >= 1 && styles.stepBarActive]} />
+            <View style={[styles.stepBar, step >= 2 && styles.stepBarActive]} />
+            <View style={[styles.stepBar, step >= 3 && styles.stepBarActive]} />
+        </View>
+    );
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <Text style={styles.backText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Post New Shift</Text>
+                <View style={{ width: 50 }} />
+            </View>
+
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={styles.content}>
+                    {renderSteps()}
+                    <Text style={styles.stepLabel}>Step {step} of 3: {step === 1 ? 'Shift Basics' : step === 2 ? 'Requirements' : 'Review'}</Text>
+
+                    {step === 1 && (
+                        <View style={styles.form}>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Role Title</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="e.g. Barista"
+                                    value={jobTitle}
+                                    onChangeText={setJobTitle}
+                                    placeholderTextColor="#94a3b8"
+                                />
+                            </View>
+
+                            {/* Date & Time Row */}
+                            <View style={styles.row}>
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                    <Text style={styles.label}>Date</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Oct 14"
+                                        value={date}
+                                        onChangeText={setDate}
+                                        placeholderTextColor="#94a3b8"
+                                    />
+                                </View>
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                    <Text style={styles.label}>Start Time</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="08:00"
+                                        placeholderTextColor="#94a3b8"
+                                    />
+                                </View>
+                            </View>
+
+                            <View style={[styles.inputGroup, { marginTop: 16 }]}>
+                                <Text style={styles.label}>Hourly Rate (€)</Text>
+                                <TextInput
+                                    style={[styles.input, { fontSize: 18, fontWeight: 'bold' }]}
+                                    placeholder="13.50"
+                                    keyboardType="numeric"
+                                    placeholderTextColor="#94a3b8"
+                                />
+                                <Text style={styles.currencyPrefix}>€</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {step === 2 && (
+                        <View style={styles.form}>
+                            <Text style={styles.sectionHeader}>Who are you looking for?</Text>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Description</Text>
+                                <TextInput
+                                    style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
+                                    placeholder="Describe the role and duties..."
+                                    multiline
+                                    placeholderTextColor="#94a3b8"
+                                />
+                            </View>
+                        </View>
+                    )}
+
+                    {step === 3 && (
+                        <View style={styles.form}>
+                            <Text style={styles.sectionHeader}>Review & Post</Text>
+                            <View style={styles.reviewCard}>
+                                <Text style={styles.reviewTitle}>{jobTitle || 'Barista'}</Text>
+                                <Text style={styles.reviewRate}>€13.50/hr</Text>
+                                <View style={styles.divider} />
+                                <Text style={styles.reviewDetail}>📅 Oct 14 • 08:00 - 16:00</Text>
+                                <Text style={styles.reviewDetail}>📍 Smithfield, Dublin 7</Text>
+                            </View>
+                            <Text style={styles.feeText}>Platform Fee: €2.00</Text>
+                        </View>
+                    )}
+
+                </ScrollView>
+
+                <View style={styles.footer}>
+                    {step > 1 && (
+                        <TouchableOpacity style={styles.backBtn} onPress={() => setStep(step - 1)}>
+                            <Text style={styles.backBtnText}>Back</Text>
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                        style={[styles.nextBtn, step === 1 && { flex: 1 }]} // Expand if no back button
+                        onPress={() => {
+                            if (step < 3) setStep(step + 1);
+                            else navigation.navigate('EmployerDashboard' as never);
+                        }}
+                    >
+                        <Text style={styles.nextBtnText}>{step === 3 ? 'Post Shift' : 'Next'}</Text>
+                    </TouchableOpacity>
+                </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f1f5f9',
+        marginTop: Platform.OS === 'android' ? 24 : 0,
+    },
+    backButton: {
+        padding: 8,
+    },
+    backText: {
+        fontSize: 16,
+        color: '#64748b',
+    },
+    headerTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#0f172a',
+    },
+    content: {
+        padding: 24,
+    },
+    stepContainer: {
+        flexDirection: 'row',
+        gap: 8,
+        marginBottom: 16,
+    },
+    stepBar: {
+        flex: 1,
+        height: 4,
+        backgroundColor: '#e2e8f0',
+        borderRadius: 2,
+    },
+    stepBarActive: {
+        backgroundColor: '#0f172a',
+    },
+    stepLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#64748b',
+        marginBottom: 32,
+        textTransform: 'uppercase',
+    },
+    form: {
+        gap: 24,
+    },
+    row: {
+        flexDirection: 'row',
+        gap: 16,
+    },
+    inputGroup: {
+        position: 'relative',
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#334155',
+        marginBottom: 8,
+    },
+    input: {
+        width: '100%',
+        padding: 16,
+        backgroundColor: '#f8fafc',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        borderRadius: 12,
+        fontSize: 16,
+        color: '#0f172a',
+    },
+    currencyPrefix: {
+        position: 'absolute',
+        left: 16,
+        top: 42,
+        fontSize: 18,
+        color: '#94a3b8',
+        opacity: 0, // Placeholder
+    },
+    sectionHeader: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#0f172a',
+        marginBottom: 16,
+    },
+    reviewCard: {
+        padding: 24,
+        backgroundColor: '#f8fafc',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    reviewTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#0f172a',
+        marginBottom: 4,
+    },
+    reviewRate: {
+        fontSize: 18,
+        color: '#a91e5a',
+        fontWeight: '600',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#e2e8f0',
+        marginVertical: 16,
+    },
+    reviewDetail: {
+        fontSize: 14,
+        color: '#475569',
+        marginBottom: 8,
+    },
+    feeText: {
+        textAlign: 'center',
+        fontSize: 12,
+        color: '#94a3b8',
+        marginTop: 16,
+    },
+    footer: {
+        flexDirection: 'row',
+        padding: 24,
+        borderTopWidth: 1,
+        borderTopColor: '#f1f5f9',
+        gap: 16,
+    },
+    backBtn: {
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        backgroundColor: '#f1f5f9',
+    },
+    backBtnText: {
+        fontWeight: '600',
+        color: '#475569',
+    },
+    nextBtn: {
+        flex: 1,
+        paddingVertical: 16,
+        borderRadius: 12,
+        backgroundColor: '#0f172a',
+        alignItems: 'center',
+    },
+    nextBtnText: {
+        fontWeight: 'bold',
+        color: '#fff',
+        fontSize: 16,
+    },
+});
