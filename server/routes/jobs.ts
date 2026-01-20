@@ -40,4 +40,83 @@ router.post('/', requireAuth(['employer']), async (req: AuthRequest, res) => {
   }
 });
 
+// Update job
+router.put('/:id', requireAuth(['employer']), async (req: AuthRequest, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    // Verify ownership
+    if (job.employerId.toString() !== req.user!.id) {
+      return res.status(403).json({ error: 'Not authorized to update this job' });
+    }
+
+    const updatedJob = await Job.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+
+    res.json(updatedJob);
+  } catch (error) {
+    console.error('Update job error:', error);
+    res.status(500).json({ error: 'Failed to update job' });
+  }
+});
+
+// Delete job
+router.delete('/:id', requireAuth(['employer']), async (req: AuthRequest, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    // Verify ownership
+    if (job.employerId.toString() !== req.user!.id) {
+      return res.status(403).json({ error: 'Not authorized to delete this job' });
+    }
+
+    await Job.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Job deleted successfully' });
+  } catch (error) {
+    console.error('Delete job error:', error);
+    res.status(500).json({ error: 'Failed to delete job' });
+  }
+});
+
+// Toggle job status (active/closed)
+router.patch('/:id/status', requireAuth(['employer']), async (req: AuthRequest, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!['active', 'closed'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    // Verify ownership
+    if (job.employerId.toString() !== req.user!.id) {
+      return res.status(403).json({ error: 'Not authorized to update this job' });
+    }
+
+    job.status = status;
+    await job.save();
+
+    res.json(job);
+  } catch (error) {
+    console.error('Toggle job status error:', error);
+    res.status(500).json({ error: 'Failed to toggle job status' });
+  }
+});
+
 export default router;

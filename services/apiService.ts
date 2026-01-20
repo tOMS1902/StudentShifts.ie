@@ -227,5 +227,53 @@ export const apiService = {
 
     if (!response.ok) throw new Error('Failed to send message');
     return await response.json();
+  },
+
+  async updateJob(jobId: string, jobData: Partial<JobListing>): Promise<any> {
+    const userStr = localStorage.getItem('ss:user');
+    const token = userStr ? JSON.parse(userStr).token : '';
+
+    const response = await fetch(`${API_BASE_URL}/jobs/${jobId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(jobData),
+    });
+
+    if (!response.ok) throw new Error('Failed to update job');
+    return await response.json();
+  },
+
+  async deleteJob(jobId: string): Promise<void> {
+    const userStr = localStorage.getItem('ss:user');
+    const token = userStr ? JSON.parse(userStr).token : '';
+
+    const response = await fetch(`${API_BASE_URL}/jobs/${jobId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+    });
+
+    if (!response.ok) throw new Error('Failed to delete job');
+  },
+
+  async toggleJobStatus(jobId: string, status: 'active' | 'closed'): Promise<any> {
+    const userStr = localStorage.getItem('ss:user');
+    const token = userStr ? JSON.parse(userStr).token : '';
+
+    const response = await fetch(`${API_BASE_URL}/jobs/${jobId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) throw new Error('Failed to toggle job status');
+    return await response.json();
   }
 };

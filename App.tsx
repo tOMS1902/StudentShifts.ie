@@ -168,8 +168,122 @@ const JobDetails = ({ job, onClose, canMessage }: { job: JobListing, onClose: ()
   );
 };
 
+// --- Component: Student Profile Modal (For Employer View) ---
+const StudentProfileModal = ({ studentId, onClose }: { studentId: string, onClose: () => void }) => {
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await apiService.getStudentProfile(studentId);
+        setProfile(data);
+      } catch (e) {
+        console.error('Failed to load profile', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [studentId]);
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-white dark:bg-zinc-900 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="p-6 border-b border-warm-200 dark:border-zinc-800 flex justify-between items-center">
+          <h3 className="font-bold text-xl">Student Profile</h3>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="p-12 text-center text-zinc-400">Loading profile...</div>
+        ) : !profile ? (
+          <div className="p-12 text-center text-zinc-400">Profile not found</div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-8 space-y-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-magenta/10 rounded-full flex items-center justify-center text-3xl font-bold text-magenta">
+                {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
+              </div>
+              <div>
+                <h2 className="text-2xl font-black">{profile.firstName} {profile.lastName}</h2>
+                <p className="text-zinc-500">{profile.university}</p>
+                <p className="text-sm text-zinc-400">{profile.degree}</p>
+              </div>
+            </div>
+
+            {profile.bio && (
+              <div className="bg-warm-50 dark:bg-zinc-800 p-6 rounded-2xl">
+                <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Bio</h4>
+                <p className="leading-relaxed">{profile.bio}</p>
+              </div>
+            )}
+
+            {profile.skills && profile.skills.length > 0 && (
+              <div className="bg-warm-50 dark:bg-zinc-800 p-6 rounded-2xl">
+                <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3">Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {profile.skills.map(skill => (
+                    <span key={skill} className="px-3 py-1 bg-magenta/10 text-magenta rounded-full text-sm font-bold">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {profile.experience && profile.experience.length > 0 && (
+              <div className="bg-warm-50 dark:bg-zinc-800 p-6 rounded-2xl">
+                <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3">Experience</h4>
+                <div className="space-y-3">
+                  {profile.experience.map((exp, i) => (
+                    <div key={i}>
+                      <p className="font-bold">{exp.role} at {exp.company}</p>
+                      <p className="text-xs text-zinc-500">{exp.period}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(profile.email || profile.phone) && (
+              <div className="bg-warm-50 dark:bg-zinc-800 p-6 rounded-2xl">
+                <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3">Contact</h4>
+                {profile.email && <p className="text-sm mb-1">📧 {profile.email}</p>}
+                {profile.phone && <p className="text-sm">📱 {profile.phone}</p>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- Screen: Inbox (Employer View) ---
 const InboxPage = ({ messages, jobs }: { messages: Message[], jobs: JobListing[] }) => {
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [viewProfileId, setViewProfileId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSendReply = async () => {
+    if (!replyTo || !replyText.trim()) return;
+    setSending(true);
+    try {
+      await apiService.sendMessage(replyTo.jobId, replyText);
+      setReplyText('');
+      setReplyTo(null);
+      alert('Reply sent successfully!');
+    } catch (e) {
+      alert('Failed to send reply');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
       <h2 className="text-3xl font-bold">Employer Inbox</h2>
@@ -184,9 +298,12 @@ const InboxPage = ({ messages, jobs }: { messages: Message[], jobs: JobListing[]
             const job = jobs.find(j => j.id === msg.jobId);
             return (
               <div key={msg.id} className="bg-white dark:bg-zinc-900 border border-warm-200 dark:border-zinc-800 p-8 rounded-3xl shadow-sm flex gap-6 hover:shadow-xl hover:-translate-y-0.5 transition-all">
-                <div className="w-14 h-14 rounded-2xl bg-magenta/10 flex items-center justify-center text-magenta font-bold flex-shrink-0 text-xl">
-                  {msg.studentName.charAt(0)}
-                </div>
+                <button
+                  onClick={() => setViewProfileId(msg.studentId || '')}
+                  className="w-14 h-14 rounded-2xl bg-magenta/10 flex items-center justify-center text-magenta font-bold flex-shrink-0 text-xl hover:bg-magenta/20 transition-all cursor-pointer"
+                >
+                  {msg.studentName?.charAt(0) || 'S'}
+                </button>
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <h4 className="font-bold text-lg">{msg.studentName}</h4>
@@ -197,8 +314,18 @@ const InboxPage = ({ messages, jobs }: { messages: Message[], jobs: JobListing[]
                     <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed italic">"{msg.text}"</p>
                   </div>
                   <div className="mt-6 flex gap-3">
-                    <button className="px-6 py-2.5 bg-magenta text-white text-xs font-bold rounded-xl shadow-lg shadow-magenta/20 hover:scale-105 active:scale-95 transition-all">Reply to Student</button>
-                    <button className="px-6 py-2.5 bg-warm-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-bold rounded-xl border border-warm-200 dark:border-zinc-700 hover:bg-warm-100 transition-all">View Profile</button>
+                    <button
+                      onClick={() => setReplyTo(msg)}
+                      className="px-6 py-2.5 bg-magenta text-white text-xs font-bold rounded-xl shadow-lg shadow-magenta/20 hover:scale-105 active:scale-95 transition-all"
+                    >
+                      Reply to Student
+                    </button>
+                    <button
+                      onClick={() => setViewProfileId(msg.studentId || '')}
+                      className="px-6 py-2.5 bg-warm-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-bold rounded-xl border border-warm-200 dark:border-zinc-700 hover:bg-warm-100 transition-all"
+                    >
+                      View Profile
+                    </button>
                   </div>
                 </div>
               </div>
@@ -206,6 +333,51 @@ const InboxPage = ({ messages, jobs }: { messages: Message[], jobs: JobListing[]
           })
         )}
       </div>
+
+      {/* Reply Modal */}
+      {replyTo && (
+        <div className="fixed inset-0 z-[150] bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-warm-200 dark:border-zinc-800 flex justify-between items-center">
+              <h3 className="font-bold text-lg">Reply to {replyTo.studentName}</h3>
+              <button onClick={() => setReplyTo(null)} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold uppercase text-zinc-400 mb-2 block">Your Message</label>
+                <textarea
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl outline-none focus:ring-2 focus:ring-magenta h-32"
+                  placeholder="Type your reply..."
+                ></textarea>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className="px-6 py-3 bg-zinc-200 dark:bg-zinc-800 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendReply}
+                  disabled={sending || !replyText.trim()}
+                  className="px-6 py-3 bg-magenta text-white rounded-xl font-bold shadow-lg shadow-magenta/20 hover:scale-105 transition-all disabled:opacity-50"
+                >
+                  {sending ? 'Sending...' : 'Send Reply'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile View Modal */}
+      {viewProfileId && (
+        <StudentProfileModal studentId={viewProfileId} onClose={() => setViewProfileId(null)} />
+      )}
     </div>
   );
 };
@@ -824,7 +996,186 @@ const ManageApplicantsModal = ({ job, onClose }: { job: JobListing, onClose: () 
   );
 };
 
-const EmployerDashboard = ({ jobs, onAddListing, onManageApplicants }: { jobs: JobListing[], onAddListing: () => void, onManageApplicants: (job: JobListing) => void }) => {
+// --- Component: Edit Job Modal ---
+const EditJobModal = ({ job, onClose, onUpdate }: { job: JobListing, onClose: () => void, onUpdate: () => void }) => {
+  const [formData, setFormData] = useState({
+    title: job.title,
+    location: job.location,
+    description: job.description,
+    salaryMin: job.salaryMin.toString(),
+    salaryMax: job.salaryMax.toString(),
+    deadline: job.deadline || '',
+    responsibilities: job.responsibilities || [''],
+  });
+  const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleUpdate = async () => {
+    setLoading(true);
+    try {
+      await apiService.updateJob(job.id, {
+        ...formData,
+        salaryMin: Number(formData.salaryMin),
+        salaryMax: Number(formData.salaryMax),
+      });
+      alert('Job updated successfully!');
+      onUpdate();
+      onClose();
+    } catch (e) {
+      alert('Failed to update job');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      await apiService.deleteJob(job.id);
+      alert('Job deleted successfully!');
+      onUpdate();
+      onClose();
+    } catch (e) {
+      alert('Failed to delete job');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    setLoading(true);
+    try {
+      const newStatus = job.status === 'active' ? 'closed' : 'active';
+      await apiService.toggleJobStatus(job.id, newStatus);
+      alert(`Job ${newStatus === 'closed' ? 'hidden' : 'activated'} successfully!`);
+      onUpdate();
+      onClose();
+    } catch (e) {
+      alert('Failed to toggle job status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-white dark:bg-zinc-900 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="p-6 border-b border-warm-200 dark:border-zinc-800 flex justify-between items-center">
+          <h3 className="font-bold text-xl">Edit Job Listing</h3>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+          <div>
+            <label className="text-xs font-bold uppercase text-zinc-400 mb-2 block">Job Title</label>
+            <input
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl outline-none focus:ring-2 focus:ring-magenta"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold uppercase text-zinc-400 mb-2 block">Location</label>
+            <input
+              value={formData.location}
+              onChange={e => setFormData({ ...formData, location: e.target.value })}
+              className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl outline-none focus:ring-2 focus:ring-magenta"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold uppercase text-zinc-400 mb-2 block">Min Salary (€/hr)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.salaryMin}
+                onChange={e => setFormData({ ...formData, salaryMin: e.target.value })}
+                className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl outline-none focus:ring-2 focus:ring-magenta"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase text-zinc-400 mb-2 block">Max Salary (€/hr)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.salaryMax}
+                onChange={e => setFormData({ ...formData, salaryMax: e.target.value })}
+                className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl outline-none focus:ring-2 focus:ring-magenta"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold uppercase text-zinc-400 mb-2 block">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-200 dark:border-zinc-700 rounded-xl outline-none focus:ring-2 focus:ring-magenta h-32"
+            ></textarea>
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-warm-200 dark:border-zinc-800 space-y-3">
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={handleToggleStatus}
+              disabled={loading}
+              className="px-6 py-3 bg-zinc-200 dark:bg-zinc-800 rounded-xl font-bold hover:bg-zinc-300 transition-all disabled:opacity-50"
+            >
+              {job.status === 'active' ? 'Hide Listing' : 'Show Listing'}
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={loading}
+              className="px-6 py-3 bg-red-100 text-red-600 dark:bg-red-950/30 dark:text-red-400 rounded-xl font-bold hover:bg-red-200 transition-all disabled:opacity-50"
+            >
+              Delete
+            </button>
+            <button
+              onClick={handleUpdate}
+              disabled={loading}
+              className="px-6 py-3 bg-magenta text-white rounded-xl font-bold shadow-lg shadow-magenta/20 hover:scale-105 transition-all disabled:opacity-50"
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+
+        {/* Delete Confirmation */}
+        {showDeleteConfirm && (
+          <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl max-w-md">
+              <h4 className="text-xl font-bold mb-4">Delete Job Listing?</h4>
+              <p className="text-zinc-500 mb-6">This action cannot be undone. All applicant data for this job will remain, but the listing will be permanently removed.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-6 py-3 bg-zinc-200 dark:bg-zinc-800 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-bold"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const EmployerDashboard = ({ jobs, onAddListing, onManageApplicants, onEditJob }: { jobs: JobListing[], onAddListing: () => void, onManageApplicants: (job: JobListing) => void, onEditJob: (job: JobListing) => void }) => {
+  const totalApplicants = jobs.reduce((sum, job) => sum + (job.applicantCount || 0), 0);
+
   return (
     <div className="space-y-10 animate-in fade-in duration-500 max-w-7xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -833,7 +1184,7 @@ const EmployerDashboard = ({ jobs, onAddListing, onManageApplicants }: { jobs: J
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">Live Listings</p>
         </div>
         <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2rem] border border-warm-200 dark:border-zinc-800 shadow-sm transition-transform hover:-translate-y-1">
-          <h4 className="text-5xl font-black text-green-500">18</h4>
+          <h4 className="text-5xl font-black text-green-500">{totalApplicants}</h4>
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">New Applicants</p>
         </div>
       </div>
@@ -873,7 +1224,7 @@ const EmployerDashboard = ({ jobs, onAddListing, onManageApplicants }: { jobs: J
               </div>
               <div className="flex gap-3">
                 <button onClick={() => onManageApplicants(job)} className="px-8 py-3 text-zinc-500 hover:bg-warm-50 dark:hover:bg-zinc-800 rounded-2xl text-xs font-black transition-all">Manage Applicants</button>
-                <button className="px-8 py-3 bg-warm-50 dark:bg-zinc-800 text-magenta rounded-2xl text-xs font-black hover:bg-magenta hover:text-white transition-all">Edit Listing</button>
+                <button onClick={() => onEditJob(job)} className="px-8 py-3 bg-warm-50 dark:bg-zinc-800 text-magenta rounded-2xl text-xs font-black hover:bg-magenta hover:text-white transition-all">Edit Listing</button>
               </div>
             </div>
           ))
@@ -1024,6 +1375,7 @@ const App: React.FC = () => {
   const [showProfileWizard, setShowProfileWizard] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [manageJob, setManageJob] = useState<JobListing | null>(null);
+  const [editJob, setEditJob] = useState<JobListing | null>(null);
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -1193,10 +1545,10 @@ const App: React.FC = () => {
       }
     } else {
       switch (screen) {
-        case 'dashboard': return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} onManageApplicants={(j) => setManageJob(j)} />;
+        case 'dashboard': return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} onManageApplicants={(j) => setManageJob(j)} onEditJob={(j) => setEditJob(j)} />;
         case 'inbox': return <InboxPage messages={messages} jobs={jobs} />;
         case 'create-job': return <CreateJobPage companyName={user?.firstName || 'Company'} onCancel={() => setScreen('dashboard')} onSubmit={handlePostJob} />;
-        default: return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} onManageApplicants={(j) => setManageJob(j)} />;
+        default: return <EmployerDashboard jobs={jobs.filter(j => j.company === user?.firstName)} onAddListing={() => setScreen('create-job')} onManageApplicants={(j) => setManageJob(j)} onEditJob={(j) => setEditJob(j)} />;
       }
     }
   };
@@ -1229,6 +1581,20 @@ const App: React.FC = () => {
       )}
       {manageJob && (
         <ManageApplicantsModal job={manageJob} onClose={() => setManageJob(null)} />
+      )}
+      {editJob && (
+        <EditJobModal
+          job={editJob}
+          onClose={() => setEditJob(null)}
+          onUpdate={() => {
+            // Refresh jobs list
+            apiService.getJobs().then(fetchedJobs => {
+              if (fetchedJobs && fetchedJobs.length > 0) {
+                setJobs(fetchedJobs);
+              }
+            });
+          }}
+        />
       )}
     </Layout>
   );
