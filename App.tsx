@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Layout from './components/Layout';
 import AuthModal from './components/AuthModal';
+import ContactModal from './components/ContactModal';
 import { User, UserMode, StudentProfile, JobListing, Message, Experience } from './types';
 import { MOCK_JOBS } from './constants';
 import JobCard from './components/JobCard';
@@ -1019,6 +1020,7 @@ const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>('feed');
   const [darkMode, setDarkMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [contactModalType, setContactModalType] = useState<string | null>(null);
   const [showProfileWizard, setShowProfileWizard] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [manageJob, setManageJob] = useState<JobListing | null>(null);
@@ -1212,9 +1214,11 @@ const App: React.FC = () => {
       onAuthClick={() => setShowAuthModal(true)}
       currentScreen={screen}
       setScreen={setScreen}
+      onFooterLinkClick={(type) => setContactModalType(type)}
     >
       {renderContent()}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleLoginSuccess} />}
+      <ContactModal onClose={() => setContactModalType(null)} type={contactModalType} />
       {showProfileWizard && <ProfileSetupWizard onComplete={() => setShowProfileWizard(false)} />}
       {selectedJob && (
         <JobDetails

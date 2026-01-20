@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserMode, User } from '../types.ts';
+import { UserMode, User } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,10 +13,11 @@ interface LayoutProps {
   onAuthClick: () => void;
   currentScreen: string;
   setScreen: (screen: any) => void;
+  onFooterLinkClick: (type: string) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ 
-  children, user, activeMode, onModeSwitch, onLogout, darkMode, toggleDarkMode, onAuthClick, currentScreen, setScreen
+const Layout: React.FC<LayoutProps> = ({
+  children, user, activeMode, onModeSwitch, onLogout, darkMode, toggleDarkMode, onAuthClick, currentScreen, setScreen, onFooterLinkClick
 }) => {
   const isEmployer = user?.mode === UserMode.EMPLOYER;
 
@@ -25,7 +26,7 @@ const Layout: React.FC<LayoutProps> = ({
       <header className="sticky top-0 z-50 glass border-b border-warm-200 dark:border-zinc-800 px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo & Brand */}
-          <div 
+          <div
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => setScreen(isEmployer ? 'dashboard' : 'feed')}
           >
@@ -64,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={toggleDarkMode}
               className="p-2.5 rounded-xl hover:bg-warm-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500"
               aria-label="Toggle dark mode"
@@ -73,16 +74,16 @@ const Layout: React.FC<LayoutProps> = ({
                 {darkMode ? 'light_mode' : 'dark_mode'}
               </span>
             </button>
-            
+
             <div className="h-6 w-px bg-warm-200 dark:border-zinc-800 hidden sm:block"></div>
-            
+
             {user ? (
               <div className="flex items-center gap-4">
                 <div className="hidden sm:flex flex-col items-end">
                   <span className="text-xs font-bold truncate max-w-[120px]">{user.firstName}</span>
                   <span className="text-[9px] uppercase font-black text-magenta/60">{user.mode}</span>
                 </div>
-                <button 
+                <button
                   onClick={onLogout}
                   className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
                 >
@@ -90,7 +91,7 @@ const Layout: React.FC<LayoutProps> = ({
                 </button>
               </div>
             ) : (
-              <button 
+              <button
                 onClick={onAuthClick}
                 className="bg-magenta hover:bg-magenta-600 text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-lg shadow-magenta/10"
               >
@@ -131,14 +132,14 @@ const Layout: React.FC<LayoutProps> = ({
       <footer className="py-12 px-4 border-t border-warm-200 dark:border-zinc-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-             <span className="material-symbols-outlined text-magenta">work_history</span>
-             <span className="font-bold text-sm">StudentShifts.ie</span>
+            <span className="material-symbols-outlined text-magenta">work_history</span>
+            <span className="font-bold text-sm">StudentShifts.ie</span>
           </div>
           <div className="flex gap-8 text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-            <a href="#" className="hover:text-magenta transition-colors">Privacy</a>
-            <a href="#" className="hover:text-magenta transition-colors">Terms</a>
-            <a href="#" className="hover:text-magenta transition-colors">Contact</a>
-            <a href="#" className="hover:text-magenta transition-colors">About Us</a>
+            <button onClick={() => onFooterLinkClick('privacy')} className="hover:text-magenta transition-colors">Privacy</button>
+            <button onClick={() => onFooterLinkClick('terms')} className="hover:text-magenta transition-colors">Terms</button>
+            <button onClick={() => onFooterLinkClick('contact')} className="hover:text-magenta transition-colors">Contact</button>
+            <button onClick={() => onFooterLinkClick('about')} className="hover:text-magenta transition-colors">About Us</button>
           </div>
           <p className="text-[11px] text-zinc-400">© 2025 StudentShifts.ie — Made for Irish Students</p>
         </div>
@@ -155,7 +156,7 @@ interface HeaderLinkProps {
 }
 
 const HeaderLink: React.FC<HeaderLinkProps> = ({ icon, label, active, onClick }) => (
-  <button 
+  <button
     onClick={onClick}
     className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all whitespace-nowrap ${active ? 'text-magenta bg-magenta/5 font-bold' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
   >
