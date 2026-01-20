@@ -1,4 +1,4 @@
-import { User, StudentProfile, JobListing } from '../types.ts';
+import { User, StudentProfile, JobListing } from '../types';
 
 // In development, Vite proxies /api to localhost:4000
 // In production (Vercel), /api is routed to the serverless function
@@ -55,13 +55,20 @@ export const apiService = {
       // Assuming we might store it in localStorage or state.
       const userStr = localStorage.getItem('ss:user');
       let token = '';
+      let userId = '';
       if (userStr) {
         const user = JSON.parse(userStr);
-        token = user.token || ''; // The backend returns 'token' on login/register
+        token = user.token || '';
+        userId = user.id || user._id;
       }
 
-      const response = await fetch(`${API_BASE_URL}/profiles`, {
-        method: 'POST',
+      if (!userId) {
+        console.error('No user ID found');
+        return false;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/profiles/${userId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

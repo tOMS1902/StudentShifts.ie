@@ -452,15 +452,16 @@ const TrackerPage = () => {
 const EmployerDashboard = ({ jobs, onAddListing }: { jobs: JobListing[], onAddListing: () => void }) => {
   return (
     <div className="space-y-10 animate-in fade-in duration-500 max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2rem] border border-warm-200 dark:border-zinc-800 shadow-sm transition-transform hover:-translate-y-1">
           <h4 className="text-5xl font-black text-magenta">{jobs.length}</h4>
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">Live Listings</p>
         </div>
-        <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2rem] border border-warm-200 dark:border-zinc-800 shadow-sm transition-transform hover:-translate-y-1">
+        {/* Monthly Views hidden as per request */}
+        {/* <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2rem] border border-warm-200 dark:border-zinc-800 shadow-sm transition-transform hover:-translate-y-1">
           <h4 className="text-5xl font-black">2.4k</h4>
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">Monthly Views</p>
-        </div>
+        </div> */}
         <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2rem] border border-warm-200 dark:border-zinc-800 shadow-sm transition-transform hover:-translate-y-1">
           <h4 className="text-5xl font-black text-green-500">18</h4>
           <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-3">New Applicants</p>
