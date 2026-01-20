@@ -5,10 +5,10 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import authRoutes from './routes/auth';
-import profileRoutes from './routes/profiles';
-import jobRoutes from './routes/jobs';
-import messageRoutes from './routes/messages';
+import authRoutes from './routes/auth.js';
+import profileRoutes from './routes/profiles.js';
+import jobRoutes from './routes/jobs.js';
+import messageRoutes from './routes/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

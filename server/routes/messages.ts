@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { Message } from '../models/Message';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { Message } from '../models/Message.js';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
