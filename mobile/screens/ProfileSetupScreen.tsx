@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Platform, SafeAreaView, Dimensions, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Platform, SafeAreaView, Dimensions, KeyboardAvoidingView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { apiService } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -258,9 +259,27 @@ export default function ProfileSetupScreen() {
                 <View style={styles.bottomBar}>
                     <TouchableOpacity
                         style={styles.mainButton}
-                        onPress={() => {
+                        onPress={async () => {
                             if (step < 3) setStep(step + 1);
-                            else navigation.navigate('Home' as never); // Finish
+                            else {
+                                try {
+                                    await apiService.updateProfile({
+                                        university: formData.university,
+                                        dob: formData.dob,
+                                        bio: formData.bio,
+                                        skills: formData.skills,
+                                        experience: formData.experience ? [{
+                                            role: 'Background',
+                                            company: 'Experience',
+                                            period: formData.experience
+                                        }] : []
+                                    });
+                                    navigation.navigate('Home' as never);
+                                } catch (error) {
+                                    console.error(error);
+                                    Alert.alert('Error', 'Failed to save profile. Please try again.');
+                                }
+                            }
                         }}
                     >
                         <Text style={styles.mainButtonText}>

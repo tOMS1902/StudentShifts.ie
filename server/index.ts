@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profiles.js';
 import jobRoutes from './routes/jobs.js';
 import messageRoutes from './routes/messages.js';
+import applicationRoutes from './routes/applications.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/applications', applicationRoutes);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error', err);

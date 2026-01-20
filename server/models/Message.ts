@@ -14,6 +14,7 @@ const messageSchema = new Schema<IMessage>(
     jobId: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
     studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     studentName: { type: String, required: true },
+    senderRole: { type: String, enum: ['student', 'employer'], default: 'student' },
     text: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
     isRead: { type: Boolean, default: false }

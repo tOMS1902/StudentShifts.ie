@@ -15,13 +15,14 @@ export interface User {
 }
 
 export interface Message {
-  id: string;
+  id: string; // _id from backend
   jobId: string;
-  studentId: string;
-  studentName: string;
   text: string;
   timestamp: string;
-  isRead: boolean;
+  senderRole: 'student' | 'employer';
+  isMe?: boolean; // Frontend helper
+  studentName?: string; // Optional for employer view
+  studentId?: string;
 }
 
 export interface Experience {
@@ -52,7 +53,7 @@ export interface JobListing {
   title: string;
   company: string;
   location: string;
-  logo: string;
+  logo?: string;
   logoUrl?: string; // Backend might return logoUrl
   salaryMin: number;
   salaryMax: number;
@@ -65,6 +66,7 @@ export interface JobListing {
   contact: string;
   applicantCount: number;
   postedAt: string;
+  type?: string;
 }
 
 export enum ApplicationStatus {
@@ -80,9 +82,9 @@ export interface Application {
   jobId: string;
   studentId: string;
   status: ApplicationStatus;
-  appliedDate: string;
+  appliedDate: string; // Mapped from appliedAt
   jobTitle: string;
   companyName: string;
   location: string;
-  logo: string;
+  logo?: string;
 }

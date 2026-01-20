@@ -4,12 +4,23 @@ import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/', requireAuth(['employer']), async (req, res) => {
+router.get('/', requireAuth(['employer', 'student']), async (req: AuthRequest, res: any) => {
   try {
-    const { jobId } = req.query;
+    const { jobId, studentId } = req.query;
     const filter: Record<string, unknown> = {};
+
+    // If student, can only see their own messages
+    if (req.user?.role === 'student') {
+      filter.studentId = req.user.id;
+    }
+    // If employer, can see all (or filtered by query)
+    else {
+      if (studentId) filter.studentId = studentId;
+    }
+
     if (jobId) filter.jobId = jobId;
-    const messages = await Message.find(filter).sort({ createdAt: -1 }).limit(100);
+
+    const messages = await Message.find(filter).sort({ createdAt: 1 }).limit(100);
     res.json(messages);
   } catch (error) {
     console.error('List messages error', error);
@@ -17,19 +28,27 @@ router.get('/', requireAuth(['employer']), async (req, res) => {
   }
 });
 
-router.post('/', requireAuth(['student']), async (req: AuthRequest, res) => {
+router.post('/', requireAuth(['student', 'employer']), async (req: AuthRequest, res: any) => {
   try {
-    const { jobId, text, studentName } = req.body;
-    if (!jobId || !text) {
-      return res.status(400).json({ error: 'jobId and text are required.' });
+    const { jobId, text, studentId, studentName } = req.body; // studentId required if employer sending
+
+    // Determine the target student ID
+    const targetStudentId = req.user?.role === 'student' ? req.user.id : studentId;
+
+    if (!jobId || !text || !targetStudentId) {
+      return res.status(400).json({ error: 'jobId, text and studentId are required.' });
     }
+
     const message = await Message.create({
       jobId,
       text,
-      studentName: studentName || 'Anonymous Student',
-      studentId: req.user!.id,
-      timestamp: new Date()
+      studentName: studentName || (req.user?.role === 'student' ? 'Student' : 'Employer'),
+      studentId: targetStudentId,
+      senderRole: req.user?.role, // Ideally add this field to schema, for now just create text
+      timestamp: new Date(),
+      isRead: false
     });
+
     res.status(201).json(message);
   } catch (error) {
     console.error('Create message error', error);

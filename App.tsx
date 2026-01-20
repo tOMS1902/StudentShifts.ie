@@ -10,27 +10,57 @@ import { apiService } from './services/apiService';
 type Screen = 'feed' | 'profile' | 'tracker' | 'dashboard' | 'create-job' | 'inbox';
 
 // --- Screen: Job Details (Overlay) ---
-const JobDetails = ({ job, onClose, onMessage, canMessage }: { job: JobListing, onClose: () => void, onMessage: (msg: string) => void, canMessage: boolean }) => {
+// --- Screen: Job Details (Overlay) ---
+const JobDetails = ({ job, onClose, canMessage }: { job: JobListing, onClose: () => void, canMessage: boolean }) => {
   const [message, setMessage] = useState('');
-  const [sent, setSent] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [sending, setSending] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSend = () => {
-    if (!message.trim()) {
-      setError("Please enter a message before sending.");
-      return;
+  // Poll for messages if chat is enabled
+  useEffect(() => {
+    if (canMessage) {
+      loadMessages();
+      const interval = setInterval(loadMessages, 5000);
+      return () => clearInterval(interval);
     }
-    setError(null);
+  }, [job.id, canMessage]);
+
+  const loadMessages = async () => {
     try {
-      onMessage(message);
-      setSent(true);
-      setTimeout(() => {
-        setSent(false);
-        setMessage('');
-        onClose();
-      }, 2000);
+      const msgs = await apiService.getMessages(job.id);
+      setMessages(msgs);
     } catch (e) {
-      setError("Failed to send message. Please try again.");
+      console.error("Failed to load messages", e);
+    }
+  };
+
+  const handleApply = async () => {
+    setApplying(true);
+    try {
+      await apiService.applyToJob(job.id);
+      setHasApplied(true);
+      alert('Application sent successfully!');
+    } catch (e: any) {
+      alert('Failed to apply: ' + e.message);
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    setSending(true);
+    try {
+      await apiService.sendMessage(job.id, message);
+      setMessage('');
+      loadMessages(); // Refresh immediately
+    } catch (e) {
+      setError("Failed to send message.");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -71,6 +101,16 @@ const JobDetails = ({ job, onClose, onMessage, canMessage }: { job: JobListing, 
           </div>
 
           <div>
+            <button
+              onClick={handleApply}
+              disabled={applying || hasApplied}
+              className="w-full py-4 bg-magenta text-white rounded-xl font-bold text-lg shadow-xl shadow-magenta/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+            >
+              {hasApplied ? 'Applied Successfully' : applying ? 'Sending Application...' : 'Apply Now'}
+            </button>
+          </div>
+
+          <div>
             <h3 className="font-bold mb-2">Description</h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">{job.description}</p>
           </div>
@@ -87,24 +127,36 @@ const JobDetails = ({ job, onClose, onMessage, canMessage }: { job: JobListing, 
           {canMessage && (
             <div className="border-t border-warm-100 dark:border-zinc-800 pt-6">
               <h3 className="font-bold mb-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-magenta">mail</span>
-                Message Employer
+                <span className="material-symbols-outlined text-magenta">chat</span>
+                Chat with Employer
               </h3>
-              {error && <p className="text-red-500 text-xs font-bold mb-2">{error}</p>}
-              <div className="space-y-3">
-                <textarea
-                  placeholder="Ask a question about the role or pitch yourself..."
-                  className="w-full p-4 bg-warm-50 dark:bg-zinc-800 border border-warm-100 dark:border-zinc-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-magenta transition-all"
-                  rows={3}
+
+              <div className="max-h-60 overflow-y-auto mb-4 space-y-3 bg-warm-50 dark:bg-zinc-900 p-4 rounded-xl">
+                {messages.length === 0 && <p className="text-xs text-zinc-400 text-center">No messages yet.</p>}
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.isMe ? 'bg-magenta text-white rounded-br-sm' : 'bg-white border border-warm-200 text-zinc-700 rounded-bl-sm'}`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  className="flex-1 p-3 bg-white border border-warm-200 rounded-xl text-sm outline-none focus:border-magenta"
                   value={message}
                   onChange={e => setMessage(e.target.value)}
-                ></textarea>
+                  onKeyDown={e => e.key === 'Enter' && handleSend()}
+                />
                 <button
                   onClick={handleSend}
-                  disabled={sent}
-                  className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg ${sent ? 'bg-green-500 text-white' : 'bg-magenta text-white active:scale-95 shadow-magenta/20'}`}
+                  disabled={sending}
+                  className="px-4 bg-magenta text-white rounded-xl font-bold"
                 >
-                  {sent ? 'Message Sent!' : 'Send Message'}
+                  Send
                 </button>
               </div>
             </div>

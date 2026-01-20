@@ -1,33 +1,62 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, Platform, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { apiService } from '../services/api';
+import { Application } from '../types';
 
 const { width } = Dimensions.get('window');
 
 export default function ApplicationsScreen() {
     const navigation = useNavigation();
     const [selectedTab, setSelectedTab] = useState<'Applied' | 'Review' | 'Interviews'>('Applied');
+    const [applications, setApplications] = useState<Application[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Specific data for Design 5 components
+    useEffect(() => {
+        loadApplications();
+    }, []);
+
+    const loadApplications = async () => {
+        try {
+            setLoading(true);
+            const data = await apiService.getMyApplications();
+            setApplications(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Derived stats
+    const appliedCount = applications.filter(a => a.status === 'applied').length;
+    const reviewCount = applications.filter(a => a.status === 'review').length;
+    const interviewCount = applications.filter(a => a.status === 'interview').length;
+
     const stats = [
-        { label: 'Applied', count: 12, active: true },
-        { label: 'Review', count: 5, active: false },
-        { label: 'Interviews', count: 3, active: false },
+        { label: 'Applied', count: appliedCount, status: 'applied' },
+        { label: 'Review', count: reviewCount, status: 'review' },
+        { label: 'Interviews', count: interviewCount, status: 'interview' },
     ];
+
+    const filteredApps = applications.filter(a => {
+        if (selectedTab === 'Applied') return a.status === 'applied';
+        if (selectedTab === 'Review') return a.status === 'review';
+        if (selectedTab === 'Interviews') return a.status === 'interview';
+        return true;
+    });
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Applications</Text>
-                <TouchableOpacity>
-                    <Text style={styles.headerIcon}>🔔</Text>
+                <TouchableOpacity onPress={loadApplications}>
+                    <Text style={styles.headerIcon}>↻</Text>
                 </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* Stats Tabs */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
                     {stats.map((stat, index) => (
                         <TouchableOpacity
@@ -41,55 +70,34 @@ export default function ApplicationsScreen() {
                     ))}
                 </ScrollView>
 
-                {/* Content based on tab - Mocking "Applied" content from design */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Recent Updates</Text>
-
-                    {/* Card 1 - Interview */}
-                    <View style={styles.card}>
-                        <View style={styles.cardHeader}>
-                            <View style={styles.companyLogo}>
-                                {/* Img placeholder */}
+                    {loading ? (
+                        <Text style={{ textAlign: 'center', padding: 20 }}>Loading applications...</Text>
+                    ) : filteredApps.length === 0 ? (
+                        <Text style={{ textAlign: 'center', padding: 20, color: '#64748b' }}>No applications found in this category.</Text>
+                    ) : (
+                        filteredApps.map(app => (
+                            <View key={app.id} style={styles.card}>
+                                <View style={styles.cardHeader}>
+                                    <View style={styles.companyLogo} />
+                                    <View style={styles.cardHeaderText}>
+                                        <Text style={styles.roleText}>{app.jobTitle}</Text>
+                                        <Text style={styles.companyText}>{app.company}</Text>
+                                    </View>
+                                    <View style={[styles.statusBadge, { backgroundColor: '#e0f2fe' }]}>
+                                        <Text style={[styles.statusText, { color: '#0369a1' }]}>{app.status.toUpperCase()}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.cardDivider} />
+                                <View style={styles.cardFooter}>
+                                    <Text style={styles.footerInfo}>📅 Applied: {new Date(app.dateApplied).toLocaleDateString()}</Text>
+                                </View>
                             </View>
-                            <View style={styles.cardHeaderText}>
-                                <Text style={styles.roleText}>Weekend Barista</Text>
-                                <Text style={styles.companyText}>Proper Order Coffee Co.</Text>
-                            </View>
-                            <View style={[styles.statusBadge, { backgroundColor: '#dcfce7' }]}>
-                                <Text style={[styles.statusText, { color: '#166534' }]}>Interview</Text>
-                            </View>
-                        </View>
-                        <View style={styles.cardDivider} />
-                        <View style={styles.cardFooter}>
-                            <Text style={styles.footerInfo}>📅 Tomorrow, 2:00 PM</Text>
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Text style={styles.actionButtonText}>View Details</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    {/* Card 2 - Review */}
-                    <View style={styles.card}>
-                        <View style={styles.cardHeader}>
-                            <View style={[styles.companyLogo, { backgroundColor: '#e2e8f0' }]}>
-                                {/* Img placeholder */}
-                            </View>
-                            <View style={styles.cardHeaderText}>
-                                <Text style={styles.roleText}>Retail Assistant</Text>
-                                <Text style={styles.companyText}>Zara</Text>
-                            </View>
-                            <View style={[styles.statusBadge, { backgroundColor: '#e0f2fe' }]}>
-                                <Text style={[styles.statusText, { color: '#0369a1' }]}>In Review</Text>
-                            </View>
-                        </View>
-                        <View style={styles.cardDivider} />
-                        <View style={styles.cardFooter}>
-                            <Text style={styles.footerInfo}>👀 Viewed 2h ago</Text>
-                        </View>
-                    </View>
+                        ))
+                    )}
                 </View>
 
-                {/* Boost Section */}
                 <View style={styles.boostCard}>
                     <View style={styles.boostContent}>
                         <Text style={styles.boostTitle}>Boost your chances 🚀</Text>

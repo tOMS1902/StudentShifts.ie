@@ -1,14 +1,70 @@
 
-import React from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, Platform, StatusBar } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, Platform, StatusBar, Alert, ActivityIndicator } from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { apiService } from '../services/api';
+import { Job, RootStackParamList } from '../types';
 
 const { width } = Dimensions.get('window');
 
+type JobDetailsRouteProp = RouteProp<RootStackParamList, 'JobDetails'>;
+
 export default function JobDetailsScreen() {
     const navigation = useNavigation();
-    const route = useRoute();
-    // In a real app, retrieve job ID from route.params
+    const route = useRoute<JobDetailsRouteProp>();
+    const jobId = route.params?.jobId;
+
+    const [job, setJob] = useState<Job | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [applying, setApplying] = useState(false);
+
+    useEffect(() => {
+        if (jobId) {
+            loadJob();
+        }
+    }, [jobId]);
+
+    const loadJob = async () => {
+        try {
+            const data = await apiService.getJob(jobId);
+            setJob(data);
+        } catch (error) {
+            console.error('Failed to load job', error);
+            Alert.alert('Error', 'Could not load job details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleApply = async () => {
+        if (!jobId) return;
+        setApplying(true);
+        try {
+            await apiService.applyToJob(jobId);
+            Alert.alert('Success', 'Application submitted successfully!');
+            navigation.goBack();
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to apply');
+        } finally {
+            setApplying(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#A31D5D" />
+            </View>
+        );
+    }
+
+    if (!job) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text>Job not found</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -17,7 +73,6 @@ export default function JobDetailsScreen() {
             {/* Header / Nav */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                    {/* Simple Back Icon Placeholder */}
                     <Text style={styles.iconText}>←</Text>
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
@@ -36,66 +91,53 @@ export default function JobDetailsScreen() {
                 <View style={styles.sectionBorder}>
                     <View style={styles.topRow}>
                         <View style={styles.logoContainer}>
-                            <Text style={styles.logoText}>PROPER ORDER</Text>
+                            <Text style={styles.logoText}>LOGO</Text>
                         </View>
                         <View style={styles.salaryContainer}>
-                            <Text style={styles.salaryText}>€13-15.5/hr</Text>
+                            <Text style={styles.salaryText}>
+                                {job.salaryMin && job.salaryMax
+                                    ? `€${job.salaryMin}-${job.salaryMax}/hr`
+                                    : 'Competitive Pay'}
+                            </Text>
                             <Text style={styles.salarySubText}>WEEKLY PAY</Text>
                         </View>
                     </View>
 
-                    <Text style={styles.jobTitle}>Weekend Barista - Student Specialist</Text>
-                    <Text style={styles.companyName}>Proper Order Coffee Co.</Text>
+                    <Text style={styles.jobTitle}>{job.title}</Text>
+                    <Text style={styles.companyName}>{job.company}</Text>
 
                     <View style={styles.locationRow}>
                         <Text style={styles.locationIcon}>📍</Text>
-                        <Text style={styles.locationText}>Smithfield, Dublin 7</Text>
+                        <Text style={styles.locationText}>{job.location}</Text>
                     </View>
 
                     <View style={styles.tagsRow}>
                         <View style={[styles.tag, styles.tagPrimary]}>
-                            <Text style={styles.tagTextPrimary}>PART-TIME</Text>
+                            <Text style={styles.tagTextPrimary}>{job.type || 'PART-TIME'}</Text>
                         </View>
-                        <View style={styles.tag}>
-                            <Text style={styles.tagText}>DUBLIN 7</Text>
-                        </View>
-                        <View style={styles.tag}>
-                            <Text style={styles.tagText}>HOSPITALITY</Text>
-                        </View>
+                        {job.tags && job.tags.map((tag, index) => (
+                            <View key={index} style={styles.tag}>
+                                <Text style={styles.tagText}>{tag.toUpperCase()}</Text>
+                            </View>
+                        ))}
                     </View>
                 </View>
 
-                {/* Upcoming Shifts */}
+                {/* Upcoming Shifts - Placeholder or derived from Job if schema supports it */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Upcoming Shifts</Text>
                     <View style={styles.shiftCard}>
                         <View>
-                            <Text style={styles.shiftDate}>Saturday, Oct 14</Text>
-                            <Text style={styles.shiftTime}>08:00 AM — 04:00 PM</Text>
+                            <Text style={styles.shiftDate}>Flexible Schedule</Text>
+                            <Text style={styles.shiftTime}>Contact for details</Text>
                         </View>
-                        <Text style={styles.shiftHours}>8 hours</Text>
-                    </View>
-                    <View style={styles.shiftCard}>
-                        <View>
-                            <Text style={styles.shiftDate}>Sunday, Oct 15</Text>
-                            <Text style={styles.shiftTime}>09:00 AM — 03:00 PM</Text>
-                        </View>
-                        <Text style={styles.shiftHours}>6 hours</Text>
                     </View>
                 </View>
 
                 {/* Description */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Job Description</Text>
-                    <Text style={styles.descriptionText}>
-                        We're looking for an enthusiastic student barista to join our Smithfield team for the busy weekend shifts. You'll be working in one of Dublin's most renowned specialty coffee shops.
-                    </Text>
-                    <View style={styles.bulletList}>
-                        <Text style={styles.bulletItem}>• Dialing in espresso and pouring high-quality latte art.</Text>
-                        <Text style={styles.bulletItem}>• Providing exceptional customer service in a fast-paced environment.</Text>
-                        <Text style={styles.bulletItem}>• Maintaining a clean and organized workspace.</Text>
-                        <Text style={styles.bulletItem}>• Previous specialty coffee experience (6+ months) preferred.</Text>
-                    </View>
+                    <Text style={styles.descriptionText}>{job.description}</Text>
                 </View>
 
                 {/* Location Map Placeholder */}
@@ -109,13 +151,13 @@ export default function JobDetailsScreen() {
                             </View>
                         </View>
                         <View style={styles.mapLabel}>
-                            <Text style={styles.mapLabelText}>Haymarket, Smithfield, Dublin 7</Text>
+                            <Text style={styles.mapLabelText}>{job.location}</Text>
                         </View>
                     </View>
                 </View>
 
                 <View style={[styles.section, { alignItems: 'center', paddingBottom: 100 }]}>
-                    <Text style={styles.footerText}>Posted 2 days ago • Ref: SS-49210</Text>
+                    <Text style={styles.footerText}>Posted {new Date(job.postedAt || Date.now()).toLocaleDateString()} • Ref: #{job._id.slice(-6)}</Text>
                 </View>
             </ScrollView>
 
@@ -125,8 +167,12 @@ export default function JobDetailsScreen() {
                     <TouchableOpacity style={styles.bookmarkButton}>
                         <Text style={styles.bookmarkIcon}>🔖</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.applyButton}>
-                        <Text style={styles.applyButtonText}>APPLY NOW</Text>
+                    <TouchableOpacity
+                        style={[styles.applyButton, applying && { opacity: 0.7 }]}
+                        onPress={handleApply}
+                        disabled={applying}
+                    >
+                        <Text style={styles.applyButtonText}>{applying ? 'APPLYING...' : 'APPLY NOW'}</Text>
                         <Text style={styles.applyButtonArrow}>→</Text>
                     </TouchableOpacity>
                 </View>

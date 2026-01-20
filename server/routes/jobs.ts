@@ -16,7 +16,11 @@ router.get('/', async (_req, res) => {
 
 router.post('/', requireAuth(['employer']), async (req: AuthRequest, res) => {
   try {
+    console.log('SERVER: Create Job Request Body:', req.body);
+    console.log('SERVER: Create Job User:', req.user);
+
     if (!req.user) {
+      console.warn('SERVER: Unauthorized attempt to create job');
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const payload = {
@@ -24,10 +28,14 @@ router.post('/', requireAuth(['employer']), async (req: AuthRequest, res) => {
       employerId: req.user.id,
       company: req.body.company || req.body.companyName
     };
+
+    console.log('SERVER: Job Payload:', payload);
+
     const job = await Job.create(payload);
+    console.log('SERVER: Job Created Successfully:', job._id);
     res.status(201).json(job);
   } catch (error) {
-    console.error('Create job error', error);
+    console.error('Create job error:', error);
     res.status(500).json({ error: 'Failed to create job.' });
   }
 });

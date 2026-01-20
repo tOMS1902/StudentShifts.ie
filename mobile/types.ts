@@ -9,9 +9,17 @@ export type RootStackParamList = {
     ManageShift: { shiftId: string };
     EmployerOnboarding: undefined;
     PostShift: undefined;
-    Chat: { conversationId: string };
+    Chat: { jobId: string };
     PublicProfile: { studentId: string };
 };
+
+export interface Message {
+    _id: string;
+    text: string;
+    timestamp: string;
+    senderRole: 'student' | 'employer';
+    isMe?: boolean; // Derived on frontend
+}
 
 export interface Job {
     _id: string;
@@ -36,4 +44,23 @@ export interface Application {
     status: 'applied' | 'interview' | 'review' | 'rejected' | 'accepted';
     location: string;
     dateApplied: string;
+}
+
+export interface Experience {
+    role: string;
+    company: string;
+    period: string;
+}
+
+export interface StudentProfile {
+    userId?: string;
+    phone?: string;
+    university?: string;
+    degree?: string;
+    dob?: string;
+    bio?: string;
+    skills: string[];
+    experience: Experience[];
+    portfolioUrl?: string;
+    linkedInUrl?: string;
 }

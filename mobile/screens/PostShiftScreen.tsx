@@ -1,14 +1,19 @@
-
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Platform, KeyboardAvoidingView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { apiService } from '../services/api';
 
 export default function PostShiftScreen() {
     const navigation = useNavigation();
     const [step, setStep] = useState(1);
-    // Basic state for demo
+    const [loading, setLoading] = useState(false);
+
+    // Form State
     const [jobTitle, setJobTitle] = useState('');
     const [date, setDate] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [hourlyRate, setHourlyRate] = useState('');
+    const [description, setDescription] = useState('');
 
     const renderSteps = () => (
         <View style={styles.stepContainer}>
@@ -17,6 +22,34 @@ export default function PostShiftScreen() {
             <View style={[styles.stepBar, step >= 3 && styles.stepBarActive]} />
         </View>
     );
+
+    const handlePost = async () => {
+        if (!jobTitle || !hourlyRate) {
+            Alert.alert('Missing Info', 'Please provide at least a Title and Hourly Rate.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await apiService.createJob({
+                title: jobTitle,
+                company: 'My Company', // Hardcoded for now until we have employer profile persistence
+                location: 'Dublin',
+                salaryMin: Number(hourlyRate),
+                salaryMax: Number(hourlyRate),
+                description: description || 'No description provided.',
+                type: 'Shift',
+                tags: ['Part-Time']
+            });
+            Alert.alert('Success', 'Shift posted successfully!');
+            navigation.navigate('EmployerDashboard' as never);
+        } catch (error: any) {
+            console.error(error);
+            Alert.alert('Error', error.message || 'Failed to post shift');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -63,6 +96,8 @@ export default function PostShiftScreen() {
                                     <TextInput
                                         style={styles.input}
                                         placeholder="08:00"
+                                        value={startTime}
+                                        onChangeText={setStartTime}
                                         placeholderTextColor="#94a3b8"
                                     />
                                 </View>
@@ -73,6 +108,8 @@ export default function PostShiftScreen() {
                                 <TextInput
                                     style={[styles.input, { fontSize: 18, fontWeight: 'bold' }]}
                                     placeholder="13.50"
+                                    value={hourlyRate}
+                                    onChangeText={setHourlyRate}
                                     keyboardType="numeric"
                                     placeholderTextColor="#94a3b8"
                                 />
@@ -89,6 +126,8 @@ export default function PostShiftScreen() {
                                 <TextInput
                                     style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
                                     placeholder="Describe the role and duties..."
+                                    value={description}
+                                    onChangeText={setDescription}
                                     multiline
                                     placeholderTextColor="#94a3b8"
                                 />
@@ -101,10 +140,10 @@ export default function PostShiftScreen() {
                             <Text style={styles.sectionHeader}>Review & Post</Text>
                             <View style={styles.reviewCard}>
                                 <Text style={styles.reviewTitle}>{jobTitle || 'Barista'}</Text>
-                                <Text style={styles.reviewRate}>€13.50/hr</Text>
+                                <Text style={styles.reviewRate}>€{hourlyRate || '0'}/hr</Text>
                                 <View style={styles.divider} />
-                                <Text style={styles.reviewDetail}>📅 Oct 14 • 08:00 - 16:00</Text>
-                                <Text style={styles.reviewDetail}>📍 Smithfield, Dublin 7</Text>
+                                <Text style={styles.reviewDetail}>📅 {date || 'Date'} • {startTime || 'Time'}</Text>
+                                <Text style={styles.reviewDetail}>📍 Dublin</Text>
                             </View>
                             <Text style={styles.feeText}>Platform Fee: €2.00</Text>
                         </View>
@@ -114,18 +153,23 @@ export default function PostShiftScreen() {
 
                 <View style={styles.footer}>
                     {step > 1 && (
-                        <TouchableOpacity style={styles.backBtn} onPress={() => setStep(step - 1)}>
+                        <TouchableOpacity style={styles.backBtn} onPress={() => setStep(step - 1)} disabled={loading}>
                             <Text style={styles.backBtnText}>Back</Text>
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
-                        style={[styles.nextBtn, step === 1 && { flex: 1 }]} // Expand if no back button
+                        style={[styles.nextBtn, step === 1 && { flex: 1 }, loading && { opacity: 0.7 }]}
                         onPress={() => {
                             if (step < 3) setStep(step + 1);
-                            else navigation.navigate('EmployerDashboard' as never);
+                            else handlePost();
                         }}
+                        disabled={loading}
                     >
-                        <Text style={styles.nextBtnText}>{step === 3 ? 'Post Shift' : 'Next'}</Text>
+                        {loading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text style={styles.nextBtnText}>{step === 3 ? 'Post Shift' : 'Next'}</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>

@@ -1,26 +1,62 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Platform, KeyboardAvoidingView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { apiService } from '../services/api';
+import { RootStackParamList, Message } from '../types';
+
+type ChatScreenRouteProp = RouteProp<RootStackParamList, 'Chat'>;
 
 export default function ChatScreen() {
     const navigation = useNavigation();
-    const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([
-        { id: 1, text: 'Hi! Are you available for the Saturday morning barista shift? We need someone from 7:30 AM to 1:00 PM.', time: '09:12 AM', isMe: false },
-        { id: 2, text: "Yes, I'm available! I've worked that shift before. Should I wear the standard black apron?", time: '09:15 AM', isMe: true },
-        { id: 3, text: 'Perfect! Yes, black apron and comfortable shoes. See you at 7:30 AM for the setup. ☕️', time: '09:18 AM', isMe: false },
-    ]);
+    const route = useRoute<ChatScreenRouteProp>();
 
-    const handleSend = () => {
-        if (!message.trim()) return;
-        setMessages([...messages, {
-            id: Date.now(),
-            text: message.trim(),
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isMe: true
-        }]);
-        setMessage('');
+    // Safety check - if no params, default to empty or handle error
+    const jobId = route.params?.jobId;
+
+    const [message, setMessage] = useState('');
+    const [messages, setMessages] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (jobId) {
+            loadMessages();
+            // Optional: Poll every 5 seconds for new messages
+            const interval = setInterval(loadMessages, 5000);
+            return () => clearInterval(interval);
+        }
+    }, [jobId]);
+
+    const loadMessages = async () => {
+        try {
+            const data = await apiService.getMessages(jobId);
+            // Map to UI format if needed, but our API returns isMe already
+            setMessages(data.map(m => ({
+                id: m._id,
+                text: m.text,
+                time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isMe: m.isMe
+            })));
+            setLoading(false);
+        } catch (error) {
+            console.error(error);
+            setLoading(false);
+        }
+    };
+
+    const handleSend = async () => {
+        if (!message.trim() || !jobId) return;
+
+        const textToSend = message.trim();
+        setMessage(''); // Clear input immediately
+
+        try {
+            await apiService.sendMessage(jobId, textToSend);
+            loadMessages(); // Refresh
+        } catch (error) {
+            console.error('Send failed', error);
+            // Ideally show alert and restore text
+            alert('Failed to send');
+        }
     };
 
     return (
@@ -34,7 +70,7 @@ export default function ChatScreen() {
                     <View style={styles.profileContainer}>
                         <View style={styles.avatar} />
                         <View>
-                            <Text style={styles.headerTitle}>Proper Order Coffee Co.</Text>
+                            <Text style={styles.headerTitle}>Job Chat</Text>
                             <View style={styles.statusRow}>
                                 <View style={styles.statusDot} />
                                 <Text style={styles.statusText}>Online</Text>
@@ -42,29 +78,33 @@ export default function ChatScreen() {
                         </View>
                     </View>
                 </View>
-                <TouchableOpacity style={styles.infoButton}>
-                    <Text style={styles.infoIcon}>ℹ</Text>
+                <TouchableOpacity style={styles.infoButton} onPress={loadMessages}>
+                    <Text style={styles.infoIcon}>↻</Text>
                 </TouchableOpacity>
             </View>
 
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-                <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
+                <ScrollView
+                    style={styles.chatArea}
+                    contentContainerStyle={styles.chatContent}
+                    ref={ref => ref?.scrollToEnd({ animated: true })}
+                >
                     <View style={styles.dateDivider}>
                         <Text style={styles.dateText}>TODAY</Text>
                     </View>
 
-                    {messages.map(msg => (
-                        <View key={msg.id} style={[styles.messageRow, msg.isMe ? styles.rowMe : styles.rowThem]}>
+                    {messages.map((msg, index) => (
+                        <View key={msg.id || index} style={[styles.messageRow, msg.isMe ? styles.rowMe : styles.rowThem]}>
                             {!msg.isMe && <View style={styles.avatarSmall} />}
 
                             <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
                                 <Text style={[styles.msgText, msg.isMe ? styles.textMe : styles.textThem]}>{msg.text}</Text>
                             </View>
-
-                            {msg.isMe && <View style={styles.avatarSmallMe} />}
-                            {/* Normally avatar only on left for them, right for me optionally */}
                         </View>
                     ))}
+                    {messages.length === 0 && !loading && (
+                        <Text style={{ textAlign: 'center', color: '#94a3b8', marginTop: 20 }}>No messages yet. Say hi!</Text>
+                    )}
                 </ScrollView>
 
                 <View style={styles.inputArea}>
@@ -79,9 +119,6 @@ export default function ChatScreen() {
                             onChangeText={setMessage}
                             placeholderTextColor="#94a3b8"
                         />
-                        <TouchableOpacity style={styles.emojiButton}>
-                            <Text style={styles.emojiIcon}>😊</Text>
-                        </TouchableOpacity>
                     </View>
                     <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
                         <Text style={styles.sendIcon}>➤</Text>
@@ -166,6 +203,7 @@ const styles = StyleSheet.create({
     chatContent: {
         padding: 16,
         gap: 16,
+        paddingBottom: 20
     },
     dateDivider: {
         alignItems: 'center',
