@@ -37,4 +37,9 @@ const jobSchema = new Schema<IJob>(
   { timestamps: true }
 );
 
+// Indexes for performance
+jobSchema.index({ status: 1, createdAt: -1 }); // Most common query: active jobs, newest first
+jobSchema.index({ employerId: 1 }); // Employer's jobs
+jobSchema.index({ title: 'text', description: 'text' }); // Text search
+
 export const Job = model<IJob>('Job', jobSchema);

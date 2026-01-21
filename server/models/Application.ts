@@ -26,4 +26,8 @@ const applicationSchema = new Schema<IApplication>(
 // Prevent duplicate applications
 applicationSchema.index({ jobId: 1, studentId: 1 }, { unique: true });
 
+// Additional indexes for performance
+applicationSchema.index({ studentId: 1, appliedAt: -1 }); // Student's applications
+applicationSchema.index({ jobId: 1, status: 1 }); // Job applications by status
+
 export const Application = model<IApplication>('Application', applicationSchema);

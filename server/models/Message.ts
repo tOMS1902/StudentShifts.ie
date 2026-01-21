@@ -4,6 +4,7 @@ export interface IMessage {
   jobId: Types.ObjectId;
   studentId: Types.ObjectId;
   studentName: string;
+  senderRole: 'student' | 'employer';
   text: string;
   timestamp: Date;
   isRead: boolean;
@@ -21,5 +22,9 @@ const messageSchema = new Schema<IMessage>(
   },
   { timestamps: true }
 );
+
+// Indexes for performance
+messageSchema.index({ jobId: 1, timestamp: -1 }); // Messages for a job, newest first
+messageSchema.index({ studentId: 1, timestamp: -1 }); // Student's messages
 
 export const Message = model<IMessage>('Message', messageSchema);

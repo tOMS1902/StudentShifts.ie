@@ -21,4 +21,8 @@ const userSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
+// Indexes for performance
+userSchema.index({ email: 1 }); // Already unique, but explicit
+userSchema.index({ role: 1 });
+
 export const User = model<IUser>('User', userSchema);

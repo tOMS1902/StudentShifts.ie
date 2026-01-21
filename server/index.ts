@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profiles.js';
@@ -27,17 +29,86 @@ if (!mongoUri) {
   console.warn('MONGODB_URI not configured. API will not be able to connect to MongoDB.');
 } else {
   mongoose
-    .connect(mongoUri)
+    .connect(mongoUri, {
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 5000
+    })
     .then(() => console.log('Connected to MongoDB'))
     .catch((error) => console.error('Mongo connection error', error));
 }
 
-app.use(cors());
-app.use(express.json());
+// Security: HTTPS redirect in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, `https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
+// Security: Helmet for security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", "https://studentshifts.vercel.app"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// Security: CORS whitelist
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://studentshifts.vercel.app', 'https://studentshifts.ie', 'https://www.studentshifts.ie']
+  : ['http://localhost:5173', 'http://localhost:4000', 'http://localhost:19006'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  maxAge: 86400 // 24 hours
+}));
+
+// Security: Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window per IP
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login/register attempts per 15 minutes
+  message: { error: 'Too many authentication attempts, please try again later.' },
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(express.json({ limit: '10mb' }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
+
+// Apply rate limiters
+app.use('/api/auth', authLimiter);
+app.use('/api', apiLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profiles', profileRoutes);
